@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		F44C14BB1D84F07300ADE497 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F44C14BA1D84F07300ADE497 /* main.m */; };
+		F44C14C41D85083E00ADE497 /* HMZlibData.m in Sources */ = {isa = PBXBuildFile; fileRef = F44C14C31D85083E00ADE497 /* HMZlibData.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,9 @@
 /* Begin PBXFileReference section */
 		F44C14B71D84F07300ADE497 /* KanColleGraphicDivider */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = KanColleGraphicDivider; sourceTree = BUILT_PRODUCTS_DIR; };
 		F44C14BA1D84F07300ADE497 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		F44C14C11D84F27500ADE497 /* SWFStructure.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SWFStructure.h; sourceTree = "<group>"; };
+		F44C14C21D85083E00ADE497 /* HMZlibData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMZlibData.h; sourceTree = "<group>"; };
+		F44C14C31D85083E00ADE497 /* HMZlibData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HMZlibData.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +62,9 @@
 			isa = PBXGroup;
 			children = (
 				F44C14BA1D84F07300ADE497 /* main.m */,
+				F44C14C11D84F27500ADE497 /* SWFStructure.h */,
+				F44C14C21D85083E00ADE497 /* HMZlibData.h */,
+				F44C14C31D85083E00ADE497 /* HMZlibData.m */,
 			);
 			path = KanColleGraphicDivider;
 			sourceTree = "<group>";
@@ -119,6 +126,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F44C14BB1D84F07300ADE497 /* main.m in Sources */,
+				F44C14C41D85083E00ADE497 /* HMZlibData.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -209,6 +217,7 @@
 		F44C14BF1D84F07300ADE497 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = "-lz";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -216,6 +225,7 @@
 		F44C14C01D84F07300ADE497 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OTHER_LDFLAGS = "-lz";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
