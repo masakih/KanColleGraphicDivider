@@ -26,6 +26,13 @@ typedef struct _HMSWFTag {
     UInt32 extraLength;
 } HMSWFTag;
 
+typedef struct _HMSWFBitsJPEG3 {
+    UInt16 charctorID;
+    UInt32 imageSize;
+    unsigned char imageData;
+} HMSWFBitsJPEG3;
+#define HMSWFJPEG3HeaderSize 6
+
 #pragma pack()
 
 

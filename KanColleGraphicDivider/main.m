@@ -31,27 +31,31 @@ void printHex(const unsigned char *p) {
 }
 
 void storeImage(const unsigned char *p, UInt32 length, int tagCount) {
-    @autoreleasepool {
-        printLog("####  TYPE IS PICTURE ####\n\n");
-        if(length != 0) {
-            NSData *pic = [NSData dataWithBytes:p length:length];
-            NSImage *pict = [[NSImage alloc] initWithData:pic];
-            if(!pict) {
-                fprintf(stderr, "Can not create image from data.\n");
-            } else {
-                NSString *path = [NSString stringWithFormat:@"d%d.jpg", tagCount];
-                path = [sCurrentDir stringByAppendingPathComponent:path];
-                NSURL *url = [NSURL fileURLWithPath:path];
-                [pic writeToURL:url atomically:YES];
-            }
-        }
+    printLog("####  TYPE IS PICTURE ####\n\n");
+    if(length == 0) return;
+    
+    NSData *pic = [NSData dataWithBytes:p length:length];
+    NSImage *pict = [[NSImage alloc] initWithData:pic];
+    if(!pict) {
+        fprintf(stderr, "Can not create image from data.\n");
+        return;
     }
+    
+    NSString *path = [NSString stringWithFormat:@"d%d.jpg", tagCount];
+    path = [sCurrentDir stringByAppendingPathComponent:path];
+    NSURL *url = [NSURL fileURLWithPath:path];
+    [pic writeToURL:url atomically:YES];
 }
 
 void storeDefineBitsJPEG3(const unsigned char *p, UInt32 length, int tagCount) {
-    UInt32 contentLength = length - 6;
-    UInt32 imageSize = *(UInt32 *)(p + 2);
-    p += 6;
+    printLog("####  TYPE IS PICTURE ####\n\n");
+    if(length < HMSWFJPEG3HeaderSize) return;
+    
+    const HMSWFBitsJPEG3 *bitsJPEG3 = (HMSWFBitsJPEG3 *)p;
+    
+    UInt32 contentLength = length - HMSWFJPEG3HeaderSize;
+    UInt32 imageSize = bitsJPEG3->imageSize;
+    p = &bitsJPEG3->imageData;
     
     if(imageSize == contentLength) {
         storeImage(p, contentLength, tagCount);
@@ -165,7 +169,7 @@ int main(int argc, const char * argv[]) {
         const unsigned char *p = data.bytes;
         
         // RECT: 上位5bitsが各要素のサイズを表す 要素は4つ
-        unsigned short size = *p;
+        UInt8 size = *(UInt8 *)p;
         size >>= 3;
         printLog("size -> %u (%x)\n", size,  size);
         int offset = size * 4;
@@ -210,12 +214,12 @@ int main(int argc, const char * argv[]) {
             // 画像の時の処理
             switch(tag) {
                 case 6:
-                    if(length != 0) {
+                    @autoreleasepool {
                        storeImage(p + 2, length - 2, tagCount);
                     }
                     break;
                 case 35:
-                    if(length != 0) {
+                    @autoreleasepool {
                         storeDefineBitsJPEG3(p, length, tagCount);
                     }
                     break;
@@ -224,7 +228,9 @@ int main(int argc, const char * argv[]) {
                 case 20:
                 case 36:
                 case 90:
-                    storeImage(p, length, tagCount);
+                    @autoreleasepool {
+                        storeImage(p, length, tagCount);
+                    }
                     break;
             }
             
