@@ -11,7 +11,7 @@
 #import "HMZlibData.h"
 
 static NSString *sCurrentDir = nil;
-static NSString *originalName = nil;
+static NSString *sOriginalName = nil;
 
 void printLog(const char *fmt, ...) {
 #if 0
@@ -42,7 +42,7 @@ void storeImage(const unsigned char *p, UInt32 length, int tagCount) {
         return;
     }
     
-    NSString *path = [NSString stringWithFormat:@"%@-%d.jpg", originalName, tagCount];
+    NSString *path = [NSString stringWithFormat:@"%@-%d.jpg", sOriginalName, tagCount];
     path = [sCurrentDir stringByAppendingPathComponent:path];
     NSURL *url = [NSURL fileURLWithPath:path];
     [pic writeToURL:url atomically:YES];
@@ -121,7 +121,7 @@ void storeDefineBitsJPEG3(const unsigned char *p, UInt32 length, int tagCount) {
     NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
     NSData *imageData = [rep representationUsingType:NSPNGFileType
                                   properties:@{}];
-    NSString *path = [NSString stringWithFormat:@"%@-%d.png", originalName, tagCount];
+    NSString *path = [NSString stringWithFormat:@"%@-%d.png", sOriginalName, tagCount];
     path = [sCurrentDir stringByAppendingPathComponent:path];
     NSURL *url = [NSURL fileURLWithPath:path];
     [imageData writeToURL:url atomically:YES];
@@ -151,8 +151,8 @@ int main(int argc, const char * argv[]) {
             exit(-1);
         }
         
-        originalName = [filePath lastPathComponent];
-        originalName = [originalName stringByDeletingPathExtension];
+        sOriginalName = [filePath lastPathComponent];
+        sOriginalName = [sOriginalName stringByDeletingPathExtension];
         
         printHex(data.bytes);
         
