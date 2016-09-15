@@ -10,17 +10,22 @@
 #include "SWFStructure.h"
 #import "HMZlibData.h"
 
+
+
 static NSString *sCurrentDir = nil;
 static NSString *sOriginalName = nil;
 
-void printLog(const char *fmt, ...) {
 #if 0
+#define printLog(...) printLogF( __VA_ARGS__)
+void printLogF(const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);
-#endif
 }
+#else
+#define printLog(...)
+#endif
 
 void printHex(const unsigned char *p) {
     for(int i=0;i<1;i++) {
@@ -48,7 +53,7 @@ void storeImage(const unsigned char *p, UInt32 length, int tagCount) {
     [pic writeToURL:url atomically:YES];
 }
 
-void storeDefineBitsJPEG3(const unsigned char *p, UInt32 length, int tagCount) {
+void storeBitsJPEG3(const unsigned char *p, UInt32 length, int tagCount) {
     printLog("####  TYPE IS PICTURE ####\n\n");
     if(length < HMSWFJPEG3HeaderSize) return;
     
@@ -127,6 +132,122 @@ void storeDefineBitsJPEG3(const unsigned char *p, UInt32 length, int tagCount) {
     [imageData writeToURL:url atomically:YES];
 }
 
+void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length, int tagCount) {
+    const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)p;
+    
+    UInt8 mapSize = data->data.colorTable.colorTableSize + 1;
+    printLog("color table size -> %d\n", mapSize);
+    printLog("zipped image data size -> %d\n", length - HMSWFLossless2ColorTableHeaderSize);
+    
+    NSData *zipedContentData = [NSData dataWithBytes:&data->data.colorTable.data length:length - HMSWFLossless2ColorTableHeaderSize];
+    NSData *contentData = [zipedContentData inflate];
+    printLog("unzipped image data size -> %d\n", contentData.length);
+    
+    const UInt32 *mapP = (UInt32 *)contentData.bytes;
+    const UInt8 *colorIndexP = (UInt8 *)(mapP + mapSize);
+    
+#if 0
+    printLog("MAP TABLE\n");
+    for(int i = 0; i < mapSize; i++) {
+        printLog("0x%04x ", mapP[i]);
+    }
+    printLog("\n\n");
+#endif
+    
+    // rowサイズは4bytesアライメント
+    UInt8 skipBytes = data->width % 4;
+    
+    // ARBGカラーマップからARBGビットマップを作成
+    UInt32 *imageDataP = calloc(8 * 4, data->width * data->height);
+    if(!imageDataP) {
+        fprintf(stderr, "Can not allocate enough memory.\n");
+        return;
+    }
+    
+    UInt32 *imageDataPixel = imageDataP;
+    for(UInt16 h = 0; h < data->height; h++) {
+        for(UInt16 w = 0; w < data->width; w++) {
+            printLog("%d ", *colorIndexP);
+            *imageDataPixel++ = mapP[*colorIndexP++];
+        }
+        colorIndexP += skipBytes;
+        printLog("\n");
+    }
+    
+    // ARGBビットマップからNSBitmapImageRepを作成
+    NSData *imageData = [NSData dataWithBytes:imageDataP length:8 * 4 * data->width * data->height];
+    unsigned char *pp = (unsigned char *)imageData.bytes;
+    NSBitmapImageRep *imageRef = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:&pp
+                                                                         pixelsWide:data->width
+                                                                         pixelsHigh:data->height
+                                                                      bitsPerSample:8
+                                                                    samplesPerPixel:4
+                                                                           hasAlpha:YES
+                                                                           isPlanar:NO
+                                                                     colorSpaceName:NSCalibratedRGBColorSpace
+                                                                        bytesPerRow:data->width * 4
+                                                                       bitsPerPixel:0];
+    // PNGで保存
+    NSData *tiffData = imageRef.TIFFRepresentation;
+    if(!tiffData) {
+        fprintf(stderr, "Can not create tiff image.\n");
+        return;
+    }
+    
+    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
+    NSData *pndData = [rep representationUsingType:NSPNGFileType
+                                        properties:@{}];
+    NSString *path = [NSString stringWithFormat:@"%@-%d.png", sOriginalName, tagCount];
+    path = [sCurrentDir stringByAppendingPathComponent:path];
+    NSURL *url = [NSURL fileURLWithPath:path];
+    [pndData writeToURL:url atomically:YES];
+}
+void storeBitsLossless2(const unsigned char *p, UInt32 length, int tagCount) {
+    printLog("####  TYPE IS PICTURE ####\n\n");
+    if(length < HMSWFLossless2HeaderSize) {
+        fprintf(stderr, "length is too short.\n");
+        return;
+    }
+    
+    const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)p;
+    
+    if(data->bitmapFormat == 3) {
+        storeBitLossless2ColorTable(p, length, tagCount);
+        return;
+    }
+    
+    length -= HMSWFLossless2HeaderSize;
+    
+    p = &data->data.data;
+    NSData *zipedImageData = [NSData dataWithBytes:p length:length];
+    NSData *imageData = [zipedImageData inflate];
+    unsigned char *pp = (unsigned char *)imageData.bytes;
+    NSBitmapImageRep *imageRef = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:&pp
+                                                                         pixelsWide:data->width
+                                                                         pixelsHigh:data->height
+                                                                      bitsPerSample:8 * 4
+                                                                    samplesPerPixel:4
+                                                                           hasAlpha:YES
+                                                                           isPlanar:NO
+                                                                     colorSpaceName:NSCalibratedRGBColorSpace
+                                                                        bytesPerRow:data->width * 4
+                                                                       bitsPerPixel:0];
+    // PNGで保存
+    NSData *tiffData = imageRef.TIFFRepresentation;
+    if(!tiffData) {
+        fprintf(stderr, "Can not create tiff image.\n");
+        return;
+    }
+    
+    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
+    NSData *pndData = [rep representationUsingType:NSPNGFileType
+                                        properties:@{}];
+    NSString *path = [NSString stringWithFormat:@"%@-%d.png", sOriginalName, tagCount];
+    path = [sCurrentDir stringByAppendingPathComponent:path];
+    NSURL *url = [NSURL fileURLWithPath:path];
+    [pndData writeToURL:url atomically:YES];
+}
+
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
         NSProcessInfo *pInfo = [NSProcessInfo processInfo];
@@ -178,6 +299,7 @@ int main(int argc, const char * argv[]) {
         printLog("size -> %u (%x)\n", size,  size);
         int offset = size * 4;
         offset += 5; // 上位5bit分
+        // bit -> byte
         int div = offset / 8;
         int mod = offset % 8;
         offset = div + (mod == 0 ? 0 : 1); // アライメント
@@ -185,15 +307,11 @@ int main(int argc, const char * argv[]) {
         p += offset;
         
         // fps: 8.8 fixed number.
-        UInt8 fpsE = *(UInt8 *)p;
-        p += 1;
-        UInt8 fps = *(UInt8 *)p;
-        p += 1;
-        printLog("fps -> %u.%u\n", fps, fpsE);
+        printLog("fps -> %u.%u\n", *(UInt8 *)(p + 1), *(UInt8 *)p);
+        p += 2;
         
         // frame count
-        UInt16 frameCount = *(UInt16 *)p;
-        printLog("frame count -> %u\n", frameCount);
+        printLog("frame count -> %u\n", *(UInt16 *)p);
         p += 2;
         
         // タグの処理開始
@@ -224,13 +342,17 @@ int main(int argc, const char * argv[]) {
                     break;
                 case 35:
                     @autoreleasepool {
-                        storeDefineBitsJPEG3(p, length, tagCount);
+                        storeBitsJPEG3(p, length, tagCount);
+                    }
+                    break;
+                case 36:
+                    @autoreleasepool {
+                        storeBitsLossless2(p, length, tagCount);
                     }
                     break;
                 case 8:
                 case 21:
                 case 20:
-                case 36:
                 case 90:
                     @autoreleasepool {
                         storeImage(p, length, tagCount);

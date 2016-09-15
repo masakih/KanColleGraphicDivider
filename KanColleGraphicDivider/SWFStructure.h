@@ -33,6 +33,24 @@ typedef struct _HMSWFBitsJPEG3 {
 } HMSWFBitsJPEG3;
 #define HMSWFJPEG3HeaderSize 6
 
+typedef struct _HMSWFBitLossless2ColorTable {
+    UInt8 colorTableSize;
+    unsigned char data;
+} HMSWFBitLossless2ColorTable;
+
+typedef struct _HMSWFBitsLossless2 {
+    UInt16 charctorID;
+    UInt8 bitmapFormat;
+    UInt16 width;
+    UInt16 height;
+    union {
+        HMSWFBitLossless2ColorTable colorTable;
+        unsigned char data;
+    } data;
+} HMSWFBitsLossless2;
+#define HMSWFLossless2HeaderSize 7
+#define HMSWFLossless2ColorTableHeaderSize 8
+
 #pragma pack()
 
 
