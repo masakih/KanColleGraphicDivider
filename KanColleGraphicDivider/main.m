@@ -187,6 +187,9 @@ void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length, int tagC
                                                                      colorSpaceName:NSCalibratedRGBColorSpace
                                                                         bytesPerRow:data->width * 4
                                                                        bitsPerPixel:0];
+    free(imageDataP);
+    imageDataP = NULL;
+    
     // PNGで保存
     NSData *tiffData = imageRef.TIFFRepresentation;
     if(!tiffData) {
