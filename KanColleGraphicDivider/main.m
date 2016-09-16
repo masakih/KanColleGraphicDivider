@@ -47,7 +47,7 @@ void saveDataWithExtension(id data, NSString *extention, int tagCount) {
 void saveImageAsPNG(id image, int tagCount) {
     NSData *tiffData = [image TIFFRepresentation];
     if(!tiffData) {
-        fprintf(stderr, "Can not create masked image.\n");
+        fprintf(stderr, "Can not create TIFF representation.\n");
         return;
     }
     
@@ -194,6 +194,11 @@ void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length, int tagC
                                                                        bitsPerPixel:0];
     free(imageDataP);
     imageDataP = NULL;
+    
+    if(!imageRef) {
+        fprintf(stderr, "Can not create ImageRef from maked bitmap.");
+        return;
+    }
     
     saveImageAsPNG(imageRef, tagCount);
 }
