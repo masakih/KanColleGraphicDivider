@@ -158,7 +158,7 @@ void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length, int tagC
     UInt8 skipBytes = data->width % 4;
     
     // ARBGカラーマップからARBGビットマップを作成
-    UInt32 *imageDataP = calloc(8 * 4, data->width * data->height);
+    UInt32 *imageDataP = calloc(4, data->width * data->height);
     if(!imageDataP) {
         fprintf(stderr, "Can not allocate enough memory.\n");
         return;
@@ -175,7 +175,7 @@ void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length, int tagC
     }
     
     // ARGBビットマップからNSBitmapImageRepを作成
-    NSData *imageData = [NSData dataWithBytes:imageDataP length:8 * 4 * data->width * data->height];
+    NSData *imageData = [NSData dataWithBytes:imageDataP length:4 * data->width * data->height];
     unsigned char *pp = (unsigned char *)imageData.bytes;
     NSBitmapImageRep *imageRef = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:&pp
                                                                          pixelsWide:data->width
