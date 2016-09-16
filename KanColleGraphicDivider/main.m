@@ -36,6 +36,27 @@ void printHex(const unsigned char *p) {
     }
 }
 
+
+void saveDataWithExtension(id data, NSString *extention, int tagCount) {
+    NSString *path = [NSString stringWithFormat:@"%@-%d.%@", sOriginalName, tagCount, extention];
+    path = [sCurrentDir stringByAppendingPathComponent:path];
+    NSURL *url = [NSURL fileURLWithPath:path];
+    [data writeToURL:url atomically:YES];
+}
+
+void saveImageAsPNG(id image, int tagCount) {
+    NSData *tiffData = [image TIFFRepresentation];
+    if(!tiffData) {
+        fprintf(stderr, "Can not create masked image.\n");
+        return;
+    }
+    
+    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
+    NSData *imageData = [rep representationUsingType:NSPNGFileType
+                                          properties:@{}];
+    saveDataWithExtension(imageData, @"png", tagCount);
+}
+
 void storeImage(const unsigned char *p, UInt32 length, int tagCount) {
     printLog("####  TYPE IS PICTURE ####\n\n");
     if(length == 0) return;
@@ -47,10 +68,7 @@ void storeImage(const unsigned char *p, UInt32 length, int tagCount) {
         return;
     }
     
-    NSString *path = [NSString stringWithFormat:@"%@-%d.jpg", sOriginalName, tagCount];
-    path = [sCurrentDir stringByAppendingPathComponent:path];
-    NSURL *url = [NSURL fileURLWithPath:path];
-    [pic writeToURL:url atomically:YES];
+    saveDataWithExtension(pic, @"jpg", tagCount);
 }
 
 void storeBitsJPEG3(const unsigned char *p, UInt32 length, int tagCount) {
@@ -116,20 +134,7 @@ void storeBitsJPEG3(const unsigned char *p, UInt32 length, int tagCount) {
     }
     [image unlockFocus];
     
-    // PNGで保存
-    NSData *tiffData = image.TIFFRepresentation;
-    if(!tiffData) {
-        fprintf(stderr, "Can not create masked image.\n");
-        return;
-    }
-    
-    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
-    NSData *imageData = [rep representationUsingType:NSPNGFileType
-                                  properties:@{}];
-    NSString *path = [NSString stringWithFormat:@"%@-%d.png", sOriginalName, tagCount];
-    path = [sCurrentDir stringByAppendingPathComponent:path];
-    NSURL *url = [NSURL fileURLWithPath:path];
-    [imageData writeToURL:url atomically:YES];
+    saveImageAsPNG(image, tagCount);
 }
 
 void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length, int tagCount) {
@@ -190,20 +195,7 @@ void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length, int tagC
     free(imageDataP);
     imageDataP = NULL;
     
-    // PNGで保存
-    NSData *tiffData = imageRef.TIFFRepresentation;
-    if(!tiffData) {
-        fprintf(stderr, "Can not create tiff image.\n");
-        return;
-    }
-    
-    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
-    NSData *pndData = [rep representationUsingType:NSPNGFileType
-                                        properties:@{}];
-    NSString *path = [NSString stringWithFormat:@"%@-%d.png", sOriginalName, tagCount];
-    path = [sCurrentDir stringByAppendingPathComponent:path];
-    NSURL *url = [NSURL fileURLWithPath:path];
-    [pndData writeToURL:url atomically:YES];
+    saveImageAsPNG(imageRef, tagCount);
 }
 void storeBitsLossless2(const unsigned char *p, UInt32 length, int tagCount) {
     printLog("####  TYPE IS PICTURE ####\n\n");
@@ -235,20 +227,7 @@ void storeBitsLossless2(const unsigned char *p, UInt32 length, int tagCount) {
                                                                      colorSpaceName:NSCalibratedRGBColorSpace
                                                                         bytesPerRow:data->width * 4
                                                                        bitsPerPixel:0];
-    // PNGで保存
-    NSData *tiffData = imageRef.TIFFRepresentation;
-    if(!tiffData) {
-        fprintf(stderr, "Can not create tiff image.\n");
-        return;
-    }
-    
-    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
-    NSData *pndData = [rep representationUsingType:NSPNGFileType
-                                        properties:@{}];
-    NSString *path = [NSString stringWithFormat:@"%@-%d.png", sOriginalName, tagCount];
-    path = [sCurrentDir stringByAppendingPathComponent:path];
-    NSURL *url = [NSURL fileURLWithPath:path];
-    [pndData writeToURL:url atomically:YES];
+    saveImageAsPNG(imageRef, tagCount);
 }
 
 int main(int argc, const char * argv[]) {
