@@ -15,6 +15,8 @@
 static NSString *sOutputDir = nil;
 static NSString *sOriginalName = nil;
 
+static NSArray *sCharactorIds = nil;
+
 #if 0
 #define printLog(...) printLogF( __VA_ARGS__)
 void printLogF(const char *fmt, ...) {
@@ -50,6 +52,9 @@ static void usage(int exitVal, FILE *fp)
     fprintf(fp, "Usage: %s [OPTIONS] input-swf-file\n", toolName);
     
     fprintf(fp, "\n");
+    fprintf(fp, "  -c charactorIDs, --charactorid=charactorIDs\n");
+    fprintf(fp, "\tcomma separated target image charactor ids. ex) 17,19 \n");
+    fprintf(fp, "\textract all images if not set.\n");
     fprintf(fp, "  -o output-directory, --output=output-directory\n");
     fprintf(fp, "\textracted images output to output-directory.\n");
     fprintf(fp, "  -v, --version\n");
@@ -65,14 +70,23 @@ static void version()
     exit(EXIT_SUCCESS);
 }
 
-void saveDataWithExtension(id data, NSString *extention, int tagCount) {
-    NSString *path = [NSString stringWithFormat:@"%@-%d.%@", sOriginalName, tagCount, extention];
+bool skipCharactorID(UInt16 chractorid) {
+    if(sCharactorIds.count == 0) return false;
+    
+    for(NSString *charID in sCharactorIds) {
+        if(charID.integerValue == chractorid) return false;
+    }
+    return true;
+}
+
+void saveDataWithExtension(id data, NSString *extention, UInt16 charactorID) {
+    NSString *path = [NSString stringWithFormat:@"%@-%d.%@", sOriginalName, charactorID, extention];
     path = [sOutputDir stringByAppendingPathComponent:path];
     NSURL *url = [NSURL fileURLWithPath:path];
     [data writeToURL:url atomically:YES];
 }
 
-void saveImageAsPNG(id image, int tagCount) {
+void saveImageAsPNG(id image, UInt16 charactorID) {
     NSData *tiffData = [image TIFFRepresentation];
     if(!tiffData) {
         fprintf(stderr, "Can not create TIFF representation.\n");
@@ -82,10 +96,10 @@ void saveImageAsPNG(id image, int tagCount) {
     NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
     NSData *imageData = [rep representationUsingType:NSPNGFileType
                                           properties:@{}];
-    saveDataWithExtension(imageData, @"png", tagCount);
+    saveDataWithExtension(imageData, @"png", charactorID);
 }
 
-void storeImage(const unsigned char *p, UInt32 length, int tagCount) {
+void storeImage(const unsigned char *p, UInt32 length, UInt16 charactorID) {
     printLog("####  TYPE IS PICTURE ####\n\n");
     if(length == 0) return;
     
@@ -96,21 +110,25 @@ void storeImage(const unsigned char *p, UInt32 length, int tagCount) {
         return;
     }
     
-    saveDataWithExtension(pic, @"jpg", tagCount);
+    saveDataWithExtension(pic, @"jpg", charactorID);
 }
 
-void storeBitsJPEG3(const unsigned char *p, UInt32 length, int tagCount) {
+void storeBitsJPEG3(const unsigned char *p, UInt32 length) {
     printLog("####  TYPE IS PICTURE ####\n\n");
     if(length < HMSWFJPEG3HeaderSize) return;
     
     const HMSWFBitsJPEG3 *bitsJPEG3 = (HMSWFBitsJPEG3 *)p;
+    
+    UInt16 charactorID = bitsJPEG3->charctorID;
+    printLog("CaractorID is %d\n", charactorID);
+    if(skipCharactorID(charactorID)) return;
     
     UInt32 contentLength = length - HMSWFJPEG3HeaderSize;
     UInt32 imageSize = bitsJPEG3->imageSize;
     p = &bitsJPEG3->imageData;
     
     if(imageSize == contentLength) {
-        storeImage(p, contentLength, tagCount);
+        storeImage(p, contentLength, charactorID);
         return;
     }
     
@@ -162,11 +180,15 @@ void storeBitsJPEG3(const unsigned char *p, UInt32 length, int tagCount) {
     }
     [image unlockFocus];
     
-    saveImageAsPNG(image, tagCount);
+    saveImageAsPNG(image, charactorID);
 }
 
-void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length, int tagCount) {
+void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length) {
     const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)p;
+    
+    UInt16 charactorID = data->charctorID;
+    printLog("CaractorID is %d\n", charactorID);
+    if(skipCharactorID(charactorID)) return;
     
     UInt8 mapSize = data->data.colorTable.colorTableSize + 1;
     printLog("color table size -> %d\n", mapSize);
@@ -228,9 +250,9 @@ void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length, int tagC
         return;
     }
     
-    saveImageAsPNG(imageRef, tagCount);
+    saveImageAsPNG(imageRef, charactorID);
 }
-void storeBitsLossless2(const unsigned char *p, UInt32 length, int tagCount) {
+void storeBitsLossless2(const unsigned char *p, UInt32 length) {
     printLog("####  TYPE IS PICTURE ####\n\n");
     if(length < HMSWFLossless2HeaderSize) {
         fprintf(stderr, "length is too short.\n");
@@ -239,8 +261,12 @@ void storeBitsLossless2(const unsigned char *p, UInt32 length, int tagCount) {
     
     const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)p;
     
+    UInt16 charactorID = data->charctorID;
+    printLog("CaractorID is %d\n", charactorID);
+    if(skipCharactorID(charactorID)) return;
+    
     if(data->bitmapFormat == 3) {
-        storeBitLossless2ColorTable(p, length, tagCount);
+        storeBitLossless2ColorTable(p, length);
         return;
     }
     
@@ -260,7 +286,7 @@ void storeBitsLossless2(const unsigned char *p, UInt32 length, int tagCount) {
                                                                      colorSpaceName:NSCalibratedRGBColorSpace
                                                                         bytesPerRow:data->width * 4
                                                                        bitsPerPixel:0];
-    saveImageAsPNG(imageRef, tagCount);
+    saveImageAsPNG(imageRef, charactorID);
 }
 
 int main(int argc, char * const *argv) {
@@ -270,13 +296,14 @@ int main(int argc, char * const *argv) {
         int opt;
         char *filename = NULL;
         char *oFilename = NULL;
+        char *charactorid = NULL;
         
         toolName = toolNameStr(argv[0]);
         
-#define SHORTOPTS "ho:v"
+#define SHORTOPTS "ho:vc:"
         static struct option longopts[] = {
             {"output",		required_argument,	NULL,	'o'},
-//            {"tag",		required_argument,	NULL,	't'},
+            {"charactorid",		required_argument,	NULL,	'c'},
             {"version",		no_argument,		NULL,	'v'},
             {"help",		no_argument,		NULL,	'h'},
             {NULL, 0, NULL, 0}
@@ -287,6 +314,9 @@ int main(int argc, char * const *argv) {
             switch(opt) {
                 case 'o':
                     oFilename = optarg;
+                    break;
+                case 'c':
+                    charactorid = optarg;
                     break;
                 case 'h':
                     usage(EXIT_SUCCESS, stdout);
@@ -315,6 +345,17 @@ int main(int argc, char * const *argv) {
         } else {
             NSFileManager *fm = [NSFileManager defaultManager];
             sOutputDir = fm.currentDirectoryPath;
+        }
+        
+        if(charactorid) {
+            NSString *charactoridsString = [NSString stringWithFormat:@"%s", charactorid];
+            NSArray *ids = [charactoridsString componentsSeparatedByString:@","];
+            if(ids.count != 0) {
+                sCharactorIds = ids;
+                
+                
+                printLog("CaractorIDs is %s\n", [NSString stringWithFormat:@"%@", ids].fileSystemRepresentation);
+            }
         }
         
         NSString *filePath = [NSString stringWithFormat:@"%s", filename];
@@ -395,17 +436,17 @@ int main(int argc, char * const *argv) {
             switch(tag) {
                 case 6:
                     @autoreleasepool {
-                       storeImage(p + 2, length - 2, tagCount);
+                       storeImage(p + 2, length - 2, *(UInt16 *)p);
                     }
                     break;
                 case 35:
                     @autoreleasepool {
-                        storeBitsJPEG3(p, length, tagCount);
+                        storeBitsJPEG3(p, length);
                     }
                     break;
                 case 36:
                     @autoreleasepool {
-                        storeBitsLossless2(p, length, tagCount);
+                        storeBitsLossless2(p, length);
                     }
                     break;
                 case 8:
@@ -413,7 +454,7 @@ int main(int argc, char * const *argv) {
                 case 20:
                 case 90:
                     @autoreleasepool {
-                        storeImage(p, length, tagCount);
+                        storeImage(p, length, *(UInt16 *)p);
                     }
                     break;
             }
