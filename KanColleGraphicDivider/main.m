@@ -39,6 +39,17 @@ void printHex(const unsigned char *p) {
 }
 
 
+enum {
+    tagBits = 6,
+    tagJPEGTables = 8,  // not supported
+    tagBitsJPEG2 = 21,  // not supported
+    tagBitsJPEG3 = 35,
+    tagBitsLossless = 20,  // not supported
+    tagBitsLossless2 = 36,
+    tagBitsJPEG4 = 90,  // not supported
+    
+};
+
 const char *toolName;
 const char *versionString = "1.0";
 
@@ -101,6 +112,10 @@ void saveImageAsPNG(id image, UInt16 charactorID) {
 
 void storeImage(const unsigned char *p, UInt32 length, UInt16 charactorID) {
     printLog("####  TYPE IS PICTURE ####\n\n");
+    
+    printLog("CaractorID is %d\n", charactorID);
+    if(skipCharactorID(charactorID)) return;
+    
     if(length == 0) return;
     
     NSData *pic = [NSData dataWithBytes:p length:length];
@@ -292,7 +307,7 @@ void storeBitsLossless2(const unsigned char *p, UInt32 length) {
 int main(int argc, char * const *argv) {
     @autoreleasepool {
         
-        
+        // 引数の処理
         int opt;
         char *filename = NULL;
         char *oFilename = NULL;
@@ -308,7 +323,6 @@ int main(int argc, char * const *argv) {
             {"help",		no_argument,		NULL,	'h'},
             {NULL, 0, NULL, 0}
         };
-        
         
         while((opt = getopt_long(argc, argv, SHORTOPTS, longopts, NULL)) != -1) {
             switch(opt) {
@@ -332,6 +346,8 @@ int main(int argc, char * const *argv) {
         
         if(optind < argc) {
             filename = argv[optind];
+        } else {
+            usage(EXIT_FAILURE, stderr);
         }
         
         if(oFilename) {
@@ -373,6 +389,7 @@ int main(int argc, char * const *argv) {
         
         sOriginalName = [filePath lastPathComponent];
         sOriginalName = [sOriginalName stringByDeletingPathExtension];
+        
         
         printHex(data.bytes);
         
@@ -434,27 +451,27 @@ int main(int argc, char * const *argv) {
             
             // 画像の時の処理
             switch(tag) {
-                case 6:
+                case tagBits:
                     @autoreleasepool {
                        storeImage(p + 2, length - 2, *(UInt16 *)p);
                     }
                     break;
-                case 35:
+                case tagBitsJPEG3:
                     @autoreleasepool {
                         storeBitsJPEG3(p, length);
                     }
                     break;
-                case 36:
+                case tagBitsLossless2:
                     @autoreleasepool {
                         storeBitsLossless2(p, length);
                     }
                     break;
-                case 8:
-                case 21:
-                case 20:
-                case 90:
-                    @autoreleasepool {
-                        storeImage(p, length, *(UInt16 *)p);
+                case tagBitsJPEG2:
+                case tagBitsLossless:
+                case tagBitsJPEG4:
+                case tagJPEGTables:
+                    if(length > 0) {
+                        fprintf(stderr, "Not supported type. (tag=%d)\n", tag);
                     }
                     break;
             }
