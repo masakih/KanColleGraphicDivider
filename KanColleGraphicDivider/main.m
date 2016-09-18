@@ -10,9 +10,9 @@
 #include "SWFStructure.h"
 #import "HMZlibData.h"
 
+#include <getopt.h>
 
-
-static NSString *sCurrentDir = nil;
+static NSString *sOutputDir = nil;
 static NSString *sOriginalName = nil;
 
 #if 0
@@ -37,9 +37,37 @@ void printHex(const unsigned char *p) {
 }
 
 
+const char *toolName;
+const char *versionString = "1.0";
+
+const char *toolNameStr(const char *argv0)
+{
+    return [[[NSString stringWithFormat:@"%s", argv0] lastPathComponent] fileSystemRepresentation];
+}
+
+static void usage(int exitVal, FILE *fp)
+{
+    fprintf(fp, "Usage: %s [OPTIONS] input-swf-file\n", toolName);
+    
+    fprintf(fp, "\n");
+    fprintf(fp, "  -o output-directory, --output=output-directory\n");
+    fprintf(fp, "\textracted images output to output-directory.\n");
+    fprintf(fp, "  -v, --version\n");
+    fprintf(fp, "\toutput version information and exit.\n");
+    fprintf(fp, "  -h, --help\n");
+    fprintf(fp, "\tdisplay this help and text.\n");
+    
+    exit(exitVal);
+}
+static void version()
+{
+    printf("KanColleGraphicDivider %s\n", versionString);
+    exit(EXIT_SUCCESS);
+}
+
 void saveDataWithExtension(id data, NSString *extention, int tagCount) {
     NSString *path = [NSString stringWithFormat:@"%@-%d.%@", sOriginalName, tagCount, extention];
-    path = [sCurrentDir stringByAppendingPathComponent:path];
+    path = [sOutputDir stringByAppendingPathComponent:path];
     NSURL *url = [NSURL fileURLWithPath:path];
     [data writeToURL:url atomically:YES];
 }
@@ -235,28 +263,71 @@ void storeBitsLossless2(const unsigned char *p, UInt32 length, int tagCount) {
     saveImageAsPNG(imageRef, tagCount);
 }
 
-int main(int argc, const char * argv[]) {
+int main(int argc, char * const *argv) {
     @autoreleasepool {
-        NSProcessInfo *pInfo = [NSProcessInfo processInfo];
-        NSArray<NSString *> *args = pInfo.arguments;
-        if(args.count < 2) {
-            fprintf(stderr, "Few argument\n");
-            exit(-1);
+        
+        
+        int opt;
+        char *filename = NULL;
+        char *oFilename = NULL;
+        
+        toolName = toolNameStr(argv[0]);
+        
+#define SHORTOPTS "ho:v"
+        static struct option longopts[] = {
+            {"output",		required_argument,	NULL,	'o'},
+//            {"tag",		required_argument,	NULL,	't'},
+            {"version",		no_argument,		NULL,	'v'},
+            {"help",		no_argument,		NULL,	'h'},
+            {NULL, 0, NULL, 0}
+        };
+        
+        
+        while((opt = getopt_long(argc, argv, SHORTOPTS, longopts, NULL)) != -1) {
+            switch(opt) {
+                case 'o':
+                    oFilename = optarg;
+                    break;
+                case 'h':
+                    usage(EXIT_SUCCESS, stdout);
+                    break;
+                case 'v':
+                    version();
+                    break;
+                default:
+                    usage(EXIT_FAILURE, stderr);
+                    break;
+            }
         }
         
-        NSFileManager *fm = [NSFileManager defaultManager];
-        sCurrentDir = fm.currentDirectoryPath;
+        if(optind < argc) {
+            filename = argv[optind];
+        }
         
-        NSString *filePath = args[1];
+        if(oFilename) {
+            sOutputDir = [NSString stringWithFormat:@"%s", oFilename];
+            NSFileManager *fm = [NSFileManager defaultManager];
+            BOOL isDir = NO;
+            if(![fm fileExistsAtPath:sOutputDir isDirectory:&isDir] || !isDir) {
+                fprintf(stderr, "Output directory:%s is not found or not directory.", sOutputDir.fileSystemRepresentation);
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            NSFileManager *fm = [NSFileManager defaultManager];
+            sOutputDir = fm.currentDirectoryPath;
+        }
+        
+        NSString *filePath = [NSString stringWithFormat:@"%s", filename];
         if(![filePath hasPrefix:@"/"]) {
-            filePath = [sCurrentDir stringByAppendingPathComponent:filePath];
+            NSFileManager *fm = [NSFileManager defaultManager];
+            filePath = [fm.currentDirectoryPath stringByAppendingPathComponent:filePath];
         }
         
         NSURL *url = [NSURL fileURLWithPath:filePath];
         NSData *data = [NSData dataWithContentsOfURL:url];
         if(!data) {
-            fprintf(stderr, "Can not open %s.\n", args[1].UTF8String);
-            exit(-1);
+            fprintf(stderr, "Can not open %s.\n", filename);
+            exit(EXIT_FAILURE);
         }
         
         sOriginalName = [filePath lastPathComponent];
