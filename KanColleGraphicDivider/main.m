@@ -304,12 +304,125 @@ void storeBitsLossless2(const unsigned char *p, UInt32 length) {
     saveImageAsPNG(imageRef, charactorID);
 }
 
+void extractImagesFromSWFFile(const char *filename) {
+    
+    NSString *filePath = [NSString stringWithFormat:@"%s", filename];
+    if(![filePath hasPrefix:@"/"]) {
+        NSFileManager *fm = [NSFileManager defaultManager];
+        filePath = [fm.currentDirectoryPath stringByAppendingPathComponent:filePath];
+    }
+    
+    NSURL *url = [NSURL fileURLWithPath:filePath];
+    NSData *data = [NSData dataWithContentsOfURL:url];
+    if(!data) {
+        fprintf(stderr, "Can not open %s.\n", filename);
+        return;
+    }
+    
+    sOriginalName = [filePath lastPathComponent];
+    sOriginalName = [sOriginalName stringByDeletingPathExtension];
+    
+    printHex(data.bytes);
+    
+    // ヘッダの処理開始
+    const HMSWFHeader *header = data.bytes;
+    printLog("type\t%c%c%c\n", header->type[0], header->type[1], header->type[2]);
+    printLog("version\t%d\n", header->version);
+    printLog("file size\t0x%x (%d)\n", header->f.f, header->f.f);
+    data = [data subdataWithRange:NSMakeRange(8, data.length - 8)];
+    printHex(data.bytes);
+    
+    // シグニチャがCの時はコンテントはzlibで圧縮されている
+    if(header->type[0] == 'C') {
+        data = [data inflate];
+        printHex(data.bytes);
+    }
+    
+    const unsigned char *p = data.bytes;
+    
+    // RECT: 上位5bitsが各要素のサイズを表す 要素は4つ
+    UInt8 size = *(UInt8 *)p;
+    size >>= 3;
+    printLog("size -> %u (%x)\n", size,  size);
+    int offset = size * 4;
+    offset += 5; // 上位5bit分
+    // bit -> byte
+    int div = offset / 8;
+    int mod = offset % 8;
+    offset = div + (mod == 0 ? 0 : 1); // アライメント
+    printLog("offset -> %d\n", offset);
+    p += offset;
+    
+    // fps: 8.8 fixed number.
+    printLog("fps -> %u.%u\n", *(UInt8 *)(p + 1), *(UInt8 *)p);
+    p += 2;
+    
+    // frame count
+    printLog("frame count -> %u\n", *(UInt16 *)p);
+    p += 2;
+    
+    // タグの処理開始
+    int tagCount = 0;
+    while(1) {
+        printHex(p);
+        
+        HMSWFTag *tagP = (HMSWFTag *)p;
+        p += 2;
+        printLog("tag and length -> 0x%04x\n", tagP->tagAndLength);
+        UInt32 tag = tagP->tagAndLength >> 6;
+        UInt32 length = tagP->tagAndLength & 0x3F;
+        if(length == 0x3F) {
+            length = tagP->extraLength;
+            p += 4;
+        }
+        printLog("tag -> %u\nlength -> %u\n", tag, length);
+        
+        // tag == 0 終了タグ
+        if(tag == 0) break;
+        
+        // 画像の時の処理
+        switch(tag) {
+            case tagBits:
+                @autoreleasepool {
+                    storeImage(p + 2, length - 2, *(UInt16 *)p);
+                }
+                break;
+            case tagBitsJPEG3:
+                @autoreleasepool {
+                    storeBitsJPEG3(p, length);
+                }
+                break;
+            case tagBitsLossless2:
+                @autoreleasepool {
+                    storeBitsLossless2(p, length);
+                }
+                break;
+            case tagBitsJPEG2:
+            case tagBitsLossless:
+            case tagBitsJPEG4:
+            case tagJPEGTables:
+                if(length > 0) {
+                    fprintf(stderr, "Not supported type. (tag=%d)\n", tag);
+                }
+                break;
+        }
+        
+        p += length;
+        tagCount++;
+        
+        if(tagCount > 200) {
+            return;
+        }
+    }
+    
+    printLog("tag Count -> %d\n", tagCount);
+}
+
 int main(int argc, char * const *argv) {
     @autoreleasepool {
         
         // 引数の処理
         int opt;
-        char *filename = NULL;
         char *oFilename = NULL;
         char *charactorid = NULL;
         
@@ -344,9 +457,7 @@ int main(int argc, char * const *argv) {
             }
         }
         
-        if(optind < argc) {
-            filename = argv[optind];
-        } else {
+        if(optind >= argc) {
             usage(EXIT_FAILURE, stderr);
         }
         
@@ -374,118 +485,11 @@ int main(int argc, char * const *argv) {
             }
         }
         
-        NSString *filePath = [NSString stringWithFormat:@"%s", filename];
-        if(![filePath hasPrefix:@"/"]) {
-            NSFileManager *fm = [NSFileManager defaultManager];
-            filePath = [fm.currentDirectoryPath stringByAppendingPathComponent:filePath];
+        for(int filePos = optind; filePos < argc; filePos++) {
+            const char *filename = argv[filePos];
+            
+            extractImagesFromSWFFile(filename);
         }
-        
-        NSURL *url = [NSURL fileURLWithPath:filePath];
-        NSData *data = [NSData dataWithContentsOfURL:url];
-        if(!data) {
-            fprintf(stderr, "Can not open %s.\n", filename);
-            exit(EXIT_FAILURE);
-        }
-        
-        sOriginalName = [filePath lastPathComponent];
-        sOriginalName = [sOriginalName stringByDeletingPathExtension];
-        
-        
-        printHex(data.bytes);
-        
-        // ヘッダの処理開始
-        const HMSWFHeader *header = data.bytes;
-        printLog("type\t%c%c%c\n", header->type[0], header->type[1], header->type[2]);
-        printLog("version\t%d\n", header->version);
-        printLog("file size\t0x%x (%d)\n", header->f.f, header->f.f);
-        data = [data subdataWithRange:NSMakeRange(8, data.length - 8)];
-        printHex(data.bytes);
-        
-        // シグニチャがCの時はコンテントはzlibで圧縮されている
-        if(header->type[0] == 'C') {
-            data = [data inflate];
-            printHex(data.bytes);
-        }
-        
-        const unsigned char *p = data.bytes;
-        
-        // RECT: 上位5bitsが各要素のサイズを表す 要素は4つ
-        UInt8 size = *(UInt8 *)p;
-        size >>= 3;
-        printLog("size -> %u (%x)\n", size,  size);
-        int offset = size * 4;
-        offset += 5; // 上位5bit分
-        // bit -> byte
-        int div = offset / 8;
-        int mod = offset % 8;
-        offset = div + (mod == 0 ? 0 : 1); // アライメント
-        printLog("offset -> %d\n", offset);
-        p += offset;
-        
-        // fps: 8.8 fixed number.
-        printLog("fps -> %u.%u\n", *(UInt8 *)(p + 1), *(UInt8 *)p);
-        p += 2;
-        
-        // frame count
-        printLog("frame count -> %u\n", *(UInt16 *)p);
-        p += 2;
-        
-        // タグの処理開始
-        int tagCount = 0;
-        while(1) {
-            printHex(p);
-            
-            HMSWFTag *tagP = (HMSWFTag *)p;
-            p += 2;
-            printLog("tag and length -> 0x%04x\n", tagP->tagAndLength);
-            UInt32 tag = tagP->tagAndLength >> 6;
-            UInt32 length = tagP->tagAndLength & 0x3F;
-            if(length == 0x3F) {
-                length = tagP->extraLength;
-                p += 4;
-            }
-            printLog("tag -> %u\nlength -> %u\n", tag, length);
-            
-            // tag == 0 終了タグ
-            if(tag == 0) break;
-            
-            // 画像の時の処理
-            switch(tag) {
-                case tagBits:
-                    @autoreleasepool {
-                       storeImage(p + 2, length - 2, *(UInt16 *)p);
-                    }
-                    break;
-                case tagBitsJPEG3:
-                    @autoreleasepool {
-                        storeBitsJPEG3(p, length);
-                    }
-                    break;
-                case tagBitsLossless2:
-                    @autoreleasepool {
-                        storeBitsLossless2(p, length);
-                    }
-                    break;
-                case tagBitsJPEG2:
-                case tagBitsLossless:
-                case tagBitsJPEG4:
-                case tagJPEGTables:
-                    if(length > 0) {
-                        fprintf(stderr, "Not supported type. (tag=%d)\n", tag);
-                    }
-                    break;
-            }
-            
-            p += length;
-            tagCount++;
-            
-            if(tagCount > 200) {
-                exit(-1);
-            }
-        }
-        
-        printLog("tag Count -> %d\n", tagCount);
-        
     }
     return 0;
 }
