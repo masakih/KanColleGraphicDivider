@@ -332,6 +332,15 @@ void extractImagesFromSWFFile(const char *filename) {
     data = [data subdataWithRange:NSMakeRange(8, data.length - 8)];
     printHex(data.bytes);
     
+    if(header->type[0] != 'F' && header->type[0] != 'C') {
+        fprintf(stderr, "File %s is not SWF.\n", filename);
+        return;
+    }
+    if(header->type[1] != 'W' || header->type[2] != 'S') {
+        fprintf(stderr, "File %s is not SWF.\n", filename);
+        return;
+    }
+    
     // シグニチャがCの時はコンテントはzlibで圧縮されている
     if(header->type[0] == 'C') {
         data = [data inflate];
