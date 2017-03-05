@@ -12,10 +12,24 @@
 
 #include <getopt.h>
 
-static NSString *sOutputDir = nil;
-static NSString *sOriginalName = nil;
 
-static NSArray *sCharactorIds = nil;
+@interface Information: NSObject
+@property (copy) NSString *originalName;
+@property (copy) NSString *outputDir;
+@property (copy) NSString *filename;
+@property (copy) NSArray *charctorIds;
+@end
+
+@implementation Information
+- (bool)skipCharactorID:(UInt16) chractorid {
+    if(self.charctorIds.count == 0) return false;
+    
+    for(NSString *charID in self.charctorIds) {
+        if(charID.integerValue == chractorid) return false;
+    }
+    return true;
+}
+@end
 
 #if 0
 #define printLog(...) printLogF( __VA_ARGS__)
@@ -37,7 +51,6 @@ void printHex(const unsigned char *p) {
         printLog("\n");
     }
 }
-
 
 enum {
     tagBits = 6,
@@ -81,23 +94,14 @@ static void version()
     exit(EXIT_SUCCESS);
 }
 
-bool skipCharactorID(UInt16 chractorid) {
-    if(sCharactorIds.count == 0) return false;
-    
-    for(NSString *charID in sCharactorIds) {
-        if(charID.integerValue == chractorid) return false;
-    }
-    return true;
-}
-
-void saveDataWithExtension(id data, NSString *extention, UInt16 charactorID) {
-    NSString *path = [NSString stringWithFormat:@"%@-%d.%@", sOriginalName, charactorID, extention];
-    path = [sOutputDir stringByAppendingPathComponent:path];
+void saveDataWithExtension(Information *info, id data, NSString *extention, UInt16 charactorID) {
+    NSString *path = [NSString stringWithFormat:@"%@-%d.%@", info.originalName, charactorID, extention];
+    path = [info.outputDir stringByAppendingPathComponent:path];
     NSURL *url = [NSURL fileURLWithPath:path];
     [data writeToURL:url atomically:YES];
 }
 
-void saveImageAsPNG(id image, UInt16 charactorID) {
+void saveImageAsPNG(Information *info, id image, UInt16 charactorID) {
     NSData *tiffData = [image TIFFRepresentation];
     if(!tiffData) {
         fprintf(stderr, "Can not create TIFF representation.\n");
@@ -107,14 +111,14 @@ void saveImageAsPNG(id image, UInt16 charactorID) {
     NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
     NSData *imageData = [rep representationUsingType:NSPNGFileType
                                           properties:@{}];
-    saveDataWithExtension(imageData, @"png", charactorID);
+    saveDataWithExtension(info, imageData, @"png", charactorID);
 }
 
-void storeImage(const unsigned char *p, UInt32 length, UInt16 charactorID) {
+void storeImage(Information *info, const unsigned char *p, UInt32 length, UInt16 charactorID) {
     printLog("####  TYPE IS PICTURE ####\n\n");
     
     printLog("CaractorID is %d\n", charactorID);
-    if(skipCharactorID(charactorID)) return;
+    if([info skipCharactorID:charactorID]) return;
     
     if(length == 0) return;
     
@@ -125,10 +129,10 @@ void storeImage(const unsigned char *p, UInt32 length, UInt16 charactorID) {
         return;
     }
     
-    saveDataWithExtension(pic, @"jpg", charactorID);
+    saveDataWithExtension(info, pic, @"jpg", charactorID);
 }
 
-void storeBitsJPEG3(const unsigned char *p, UInt32 length) {
+void storeBitsJPEG3(Information *info, const unsigned char *p, UInt32 length) {
     printLog("####  TYPE IS PICTURE ####\n\n");
     if(length < HMSWFJPEG3HeaderSize) return;
     
@@ -136,14 +140,14 @@ void storeBitsJPEG3(const unsigned char *p, UInt32 length) {
     
     UInt16 charactorID = bitsJPEG3->charctorID;
     printLog("CaractorID is %d\n", charactorID);
-    if(skipCharactorID(charactorID)) return;
+    if([info skipCharactorID:charactorID]) return;
     
     UInt32 contentLength = length - HMSWFJPEG3HeaderSize;
     UInt32 imageSize = bitsJPEG3->imageSize;
     p = &bitsJPEG3->imageData;
     
     if(imageSize == contentLength) {
-        storeImage(p, contentLength, charactorID);
+        storeImage(info, p, contentLength, charactorID);
         return;
     }
     
@@ -178,32 +182,33 @@ void storeBitsJPEG3(const unsigned char *p, UInt32 length) {
     }
     
     // 透過画像の作成
-    NSImage *image = [[NSImage alloc] initWithSize:size];
-    [image lockFocus];
-    {
-        NSRect rect = NSMakeRect(0, 0, size.width, size.height);
-        
-        CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
-        CGContextSaveGState(context);
-        CGContextClipToMask(context, NSRectToCGRect(rect), alphaImageRef.CGImage);
-        [pict drawAtPoint:NSZeroPoint
-                 fromRect:rect
-                operation:NSCompositeCopy
-                 fraction:1.0];
-        
-        CGContextRestoreGState(context);
-    }
-    [image unlockFocus];
+    NSImage *image = [NSImage imageWithSize:size
+                                    flipped:NO
+                             drawingHandler:
+                      ^BOOL(NSRect dstRect) {
+                          NSRect rect = NSMakeRect(0, 0, size.width, size.height);
+                          
+                          CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
+                          CGContextSaveGState(context);
+                          CGContextClipToMask(context, NSRectToCGRect(rect), alphaImageRef.CGImage);
+                          [pict drawAtPoint:NSZeroPoint
+                                   fromRect:rect
+                                  operation:NSCompositeCopy
+                                   fraction:1.0];
+                          CGContextRestoreGState(context);
+                          
+                          return YES;
+                      }];
     
-    saveImageAsPNG(image, charactorID);
+    saveImageAsPNG(info, image, charactorID);
 }
 
-void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length) {
+void storeBitLossless2ColorTable(Information *info, const unsigned char *p, UInt32 length) {
     const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)p;
     
     UInt16 charactorID = data->charctorID;
     printLog("CaractorID is %d\n", charactorID);
-    if(skipCharactorID(charactorID)) return;
+    if([info skipCharactorID:charactorID]) return;
     
     UInt8 mapSize = data->data.colorTable.colorTableSize + 1;
     printLog("color table size -> %d\n", mapSize);
@@ -265,9 +270,9 @@ void storeBitLossless2ColorTable(const unsigned char *p, UInt32 length) {
         return;
     }
     
-    saveImageAsPNG(imageRef, charactorID);
+    saveImageAsPNG(info, imageRef, charactorID);
 }
-void storeBitsLossless2(const unsigned char *p, UInt32 length) {
+void storeBitsLossless2(Information *info, const unsigned char *p, UInt32 length) {
     printLog("####  TYPE IS PICTURE ####\n\n");
     if(length < HMSWFLossless2HeaderSize) {
         fprintf(stderr, "length is too short.\n");
@@ -278,10 +283,10 @@ void storeBitsLossless2(const unsigned char *p, UInt32 length) {
     
     UInt16 charactorID = data->charctorID;
     printLog("CaractorID is %d\n", charactorID);
-    if(skipCharactorID(charactorID)) return;
+    if([info skipCharactorID:charactorID]) return;
     
     if(data->bitmapFormat == 3) {
-        storeBitLossless2ColorTable(p, length);
+        storeBitLossless2ColorTable(info, p, length);
         return;
     }
     
@@ -301,12 +306,11 @@ void storeBitsLossless2(const unsigned char *p, UInt32 length) {
                                                                      colorSpaceName:NSCalibratedRGBColorSpace
                                                                         bytesPerRow:data->width * 4
                                                                        bitsPerPixel:0];
-    saveImageAsPNG(imageRef, charactorID);
+    saveImageAsPNG(info, imageRef, charactorID);
 }
 
-void extractImagesFromSWFFile(const char *filename) {
-    
-    NSString *filePath = [NSString stringWithFormat:@"%s", filename];
+void extractImagesFromSWFFile(Information *info) {
+    NSString *filePath = info.filename;
     if(![filePath hasPrefix:@"/"]) {
         NSFileManager *fm = [NSFileManager defaultManager];
         filePath = [fm.currentDirectoryPath stringByAppendingPathComponent:filePath];
@@ -315,12 +319,12 @@ void extractImagesFromSWFFile(const char *filename) {
     NSURL *url = [NSURL fileURLWithPath:filePath];
     NSData *data = [NSData dataWithContentsOfURL:url];
     if(!data) {
-        fprintf(stderr, "Can not open %s.\n", filename);
+        fprintf(stderr, "Can not open %s.\n", info.filename.UTF8String);
         return;
     }
     
-    sOriginalName = [filePath lastPathComponent];
-    sOriginalName = [sOriginalName stringByDeletingPathExtension];
+    info.originalName = [filePath lastPathComponent];
+    info.originalName = [info.originalName stringByDeletingPathExtension];
     
     printHex(data.bytes);
     
@@ -333,11 +337,11 @@ void extractImagesFromSWFFile(const char *filename) {
     printHex(data.bytes);
     
     if(header->type[0] != 'F' && header->type[0] != 'C') {
-        fprintf(stderr, "File %s is not SWF.\n", filename);
+        fprintf(stderr, "File %s is not SWF.\n", info.filename.UTF8String);
         return;
     }
     if(header->type[1] != 'W' || header->type[2] != 'S') {
-        fprintf(stderr, "File %s is not SWF.\n", filename);
+        fprintf(stderr, "File %s is not SWF.\n", info.filename.UTF8String);
         return;
     }
     
@@ -393,17 +397,17 @@ void extractImagesFromSWFFile(const char *filename) {
         switch(tag) {
             case tagBits:
                 @autoreleasepool {
-                    storeImage(p + 2, length - 2, *(UInt16 *)p);
+                    storeImage(info, p + 2, length - 2, *(UInt16 *)p);
                 }
                 break;
             case tagBitsJPEG3:
                 @autoreleasepool {
-                    storeBitsJPEG3(p, length);
+                    storeBitsJPEG3(info, p, length);
                 }
                 break;
             case tagBitsLossless2:
                 @autoreleasepool {
-                    storeBitsLossless2(p, length);
+                    storeBitsLossless2(info, p, length);
                 }
                 break;
             case tagBitsJPEG2:
@@ -428,8 +432,11 @@ void extractImagesFromSWFFile(const char *filename) {
 }
 
 int main(int argc, char * const *argv) {
+    
+    NSString *outputDir = nil;
+    NSArray *charactorIds = nil;
+    
     @autoreleasepool {
-        
         // 引数の処理
         int opt;
         char *oFilename = NULL;
@@ -471,34 +478,42 @@ int main(int argc, char * const *argv) {
         }
         
         if(oFilename) {
-            sOutputDir = [NSString stringWithFormat:@"%s", oFilename];
+            outputDir = [NSString stringWithFormat:@"%s", oFilename];
             NSFileManager *fm = [NSFileManager defaultManager];
             BOOL isDir = NO;
-            if(![fm fileExistsAtPath:sOutputDir isDirectory:&isDir] || !isDir) {
-                fprintf(stderr, "Output directory:%s is not found or not directory.", sOutputDir.fileSystemRepresentation);
+            if(![fm fileExistsAtPath:outputDir isDirectory:&isDir] || !isDir) {
+                fprintf(stderr, "Output directory:%s is not found or not directory.", outputDir.fileSystemRepresentation);
                 exit(EXIT_FAILURE);
             }
         } else {
             NSFileManager *fm = [NSFileManager defaultManager];
-            sOutputDir = fm.currentDirectoryPath;
+            outputDir = fm.currentDirectoryPath;
         }
         
         if(charactorid) {
             NSString *charactoridsString = [NSString stringWithFormat:@"%s", charactorid];
             NSArray *ids = [charactoridsString componentsSeparatedByString:@","];
             if(ids.count != 0) {
-                sCharactorIds = ids;
-                
+                charactorIds = ids;
                 
                 printLog("CaractorIDs is %s\n", [NSString stringWithFormat:@"%@", ids].fileSystemRepresentation);
             }
         }
-        
+                
+        dispatch_group_t group = dispatch_group_create();
+        dispatch_queue_t queue = dispatch_queue_create("Create image", DISPATCH_QUEUE_CONCURRENT);
         for(int filePos = optind; filePos < argc; filePos++) {
             const char *filename = argv[filePos];
+            Information *info = [Information new];
+            info.outputDir = outputDir;
+            info.charctorIds = charactorIds;
+            info.filename = [NSString stringWithFormat:@"%s", filename];
             
-            extractImagesFromSWFFile(filename);
+            dispatch_group_async(group, queue, ^{
+                extractImagesFromSWFFile(info);
+            });
         }
+        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
     }
     return 0;
 }
