@@ -478,11 +478,15 @@ int main(int argc, char * const *argv) {
         }
         
         if(oFilename) {
-            outputDir = [NSString stringWithFormat:@"%s", oFilename];
+            outputDir = [[NSString alloc] initWithUTF8String:oFilename];
+            if( outputDir.length == 0 ) {
+                fprintf(stderr, "Output directory:%s can not convert file represendation.\n", oFilename);
+                exit(EXIT_FAILURE);
+            }
             NSFileManager *fm = [NSFileManager defaultManager];
             BOOL isDir = NO;
             if(![fm fileExistsAtPath:outputDir isDirectory:&isDir] || !isDir) {
-                fprintf(stderr, "Output directory:%s is not found or not directory.", outputDir.fileSystemRepresentation);
+                fprintf(stderr, "Output directory:%s is not found or not directory.\n", outputDir.UTF8String);
                 exit(EXIT_FAILURE);
             }
         } else {
@@ -491,7 +495,7 @@ int main(int argc, char * const *argv) {
         }
         
         if(charactorid) {
-            NSString *charactoridsString = [NSString stringWithFormat:@"%s", charactorid];
+            NSString *charactoridsString = [[NSString alloc] initWithUTF8String:charactorid];
             NSArray *ids = [charactoridsString componentsSeparatedByString:@","];
             if(ids.count != 0) {
                 charactorIds = ids;
@@ -507,7 +511,7 @@ int main(int argc, char * const *argv) {
             Information *info = [Information new];
             info.outputDir = outputDir;
             info.charctorIds = charactorIds;
-            info.filename = [NSString stringWithFormat:@"%s", filename];
+            info.filename = [[NSString alloc] initWithUTF8String:filename];
             
             dispatch_group_async(group, queue, ^{
                 extractImagesFromSWFFile(info);
