@@ -17,22 +17,20 @@
 
 @property Information *information;
 
-@property const unsigned char *data;
+@property NSData *data;
 
-@property UInt32 length;
-
-@property UInt32 charactorID;
+@property (readonly) NSUInteger length;
 
 @end
 
 @implementation BitLossless2ColorTableDecoder
 
-+ (instancetype)decoderWithInformation:(Information *)information data:(const unsigned char *)data length:(UInt32)length {
++ (instancetype)decoderWithInformation:(Information *)information data:(NSData *)data {
     
-    return [[self alloc] initWithInformation:information data:data length:length];
+    return [[self alloc] initWithInformation:information data:data];
 }
 
-- (instancetype)initWithInformation:(Information *)information data:(const unsigned char *)data length:(UInt32)length {
+- (instancetype)initWithInformation:(Information *)information data:(NSData *)data {
     
     self = [super init];
     
@@ -40,15 +38,26 @@
         
         self.information = information;
         self.data = data;
-        self.length = length;
     }
     
     return self;
 }
 
+- (NSUInteger)length {
+    
+    return self.data.length;
+}
+
 - (void)decode {
     
-    saveImageAsPNG(self.information, self.object, self.charactorID);
+    saveDataWithExtension(self.information, self.object, @"png", self.charactorID);
+}
+
+- (UInt32) charactorID {
+    
+    const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)self.data.bytes;
+    
+    return data->charctorID;
 }
 
 - (id<WritableObject>)object {
@@ -58,11 +67,7 @@
 
 - (id<WritableObject>)bitLossless2ColorTable {
     
-    
-    const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)self.data;
-    
-    self.charactorID = data->charctorID;
-    if([self.information skipCharactorID:self.charactorID]) return nil;
+    const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)self.data.bytes;
     
     UInt8 mapSize = data->data.colorTable.colorTableSize + 1;
     
@@ -106,7 +111,7 @@
     free(imageDataP);
     imageDataP = NULL;
     
-    return imageRef;
+    return convertImagaData(imageRef);
 }
 
 @end

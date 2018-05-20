@@ -11,28 +11,28 @@
 #include "KanColleGraphicDivider.h"
 #import "ImageStorer.h"
 
+#import "BitsDecoder.h"
+
 #import "HMZlibData.h"
 
 @interface BitsJPEG3Decoder()
 
 @property Information *information;
 
-@property const unsigned char *data;
+@property NSData *data;
 
-@property UInt32 length;
-
-@property UInt32 charactorID;
+@property (readonly) NSUInteger length;
 
 @end
 
 @implementation BitsJPEG3Decoder
 
-+ (instancetype)decoderWithInformation:(Information *)information data:(const unsigned char *)data length:(UInt32)length {
++ (instancetype)decoderWithInformation:(Information *)information data:(NSData *)data {
     
-    return [[self alloc] initWithInformation:information data:data length:length];
+    return [[self alloc] initWithInformation:information data:data];
 }
 
-- (instancetype)initWithInformation:(Information *)information data:(const unsigned char *)data length:(UInt32)length {
+- (instancetype)initWithInformation:(Information *)information data:(NSData *)data {
     
     self = [super init];
     
@@ -40,15 +40,26 @@
         
         self.information = information;
         self.data = data;
-        self.length = length;
     }
     
     return self;
 }
 
+- (NSUInteger)length {
+    
+    return self.data.length;
+}
+
 - (void)decode {
     
-    saveImageAsPNG(self.information, self.object, self.charactorID);
+    saveDataWithExtension(self.information, self.object, @"png", self.charactorID);
+}
+
+- (UInt32) charactorID {
+    
+    const HMSWFBitsJPEG3 *data = (HMSWFBitsJPEG3 *)self.data.bytes;
+    
+    return data->charctorID;
 }
 
 - (id<WritableObject>)object {
@@ -58,24 +69,19 @@
 
 - (id<WritableObject>)bitsJPEG3 {
     
-    const unsigned char *p = self.data;
+    const unsigned char *p = self.data.bytes;
     
     if(self.length < HMSWFJPEG3HeaderSize) return nil;
     
     const HMSWFBitsJPEG3 *bitsJPEG3 = (HMSWFBitsJPEG3 *)p;
     
-    self.charactorID = bitsJPEG3->charctorID;
-    if([self.information skipCharactorID:self.charactorID]) return nil;
-    
-    UInt32 contentLength = self.length - HMSWFJPEG3HeaderSize;
-    UInt32 imageSize = bitsJPEG3->imageSize;
+    NSUInteger contentLength = self.length - HMSWFJPEG3HeaderSize;
+    NSUInteger imageSize = bitsJPEG3->imageSize;
     p = &bitsJPEG3->imageData;
     
     if(imageSize == contentLength) {
         
-        storeImage(self.information, p, self.length, self.charactorID);
-        
-        return nil;
+        return [[BitsDecoder decoderWithInformation:self.information data:self.data] object];
     }
     
     // JPEGを取出し
@@ -127,7 +133,15 @@
                           return YES;
                       }];
     
-    return image;
+    NSData *tiffData = [image TIFFRepresentation];
+    if(!tiffData) {
+        fprintf(stderr, "Can not create TIFF representation.\n");
+        return nil;
+    }
+    
+    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
+    return [rep representationUsingType:NSPNGFileType
+                                          properties:@{}];
 }
 
 @end

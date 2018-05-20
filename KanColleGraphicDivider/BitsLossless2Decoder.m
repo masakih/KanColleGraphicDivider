@@ -19,22 +19,20 @@
 
 @property Information *information;
 
-@property const unsigned char *data;
+@property NSData *data;
 
-@property UInt32 length;
-
-@property UInt32 charactorID;
+@property (readonly) NSUInteger length;
 
 @end
 
 @implementation BitsLossless2Decoder
 
-+ (instancetype)decoderWithInformation:(Information *)information data:(const unsigned char *)data length:(UInt32)length {
++ (instancetype)decoderWithInformation:(Information *)information data:(NSData *)data {
     
-    return [[self alloc] initWithInformation:information data:data length:length];
+    return [[self alloc] initWithInformation:information data:data];
 }
 
-- (instancetype)initWithInformation:(Information *)information data:(const unsigned char *)data length:(UInt32)length {
+- (instancetype)initWithInformation:(Information *)information data:(NSData *)data {
     
     self = [super init];
     
@@ -42,15 +40,26 @@
         
         self.information = information;
         self.data = data;
-        self.length = length;
     }
     
     return self;
 }
 
+- (NSUInteger)length {
+    
+    return self.data.length;
+}
+
 - (void)decode {
     
-    saveImageAsPNG(self.information, self.object, self.charactorID);
+    saveDataWithExtension(self.information, self.object, @"png", self.charactorID);
+}
+
+- (UInt32) charactorID {
+    
+    const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)self.data.bytes;
+    
+    return data->charctorID;
 }
 
 - (id<WritableObject>)object {
@@ -60,20 +69,16 @@
 
 - (id<WritableObject>)bitsLossless2 {
     
-    const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)self.data;
-    
-    self.charactorID = data->charctorID;
-    if([self.information skipCharactorID:self.charactorID]) return nil;
-    
+    const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)self.data.bytes;
+        
     if(data->bitmapFormat == 3) {
         
         id decoder = [BitLossless2ColorTableDecoder decoderWithInformation:self.information
-                                                                      data:self.data
-                                                                    length:self.length];
+                                                                      data:self.data];
         return [decoder object];
     }
     
-    UInt32 cLength = self.length - HMSWFLossless2HeaderSize;
+    NSUInteger cLength = self.length - HMSWFLossless2HeaderSize;
     
     const unsigned char *p = &data->data.data;
     NSData *zipedImageData = [NSData dataWithBytes:p length:cLength];
@@ -90,7 +95,7 @@
                                                                         bytesPerRow:data->width * 4
                                                                        bitsPerPixel:0];
     
-    return imageRef;
+    return convertImagaData(imageRef);
 }
 
 @end

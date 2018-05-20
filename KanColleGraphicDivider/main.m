@@ -20,6 +20,7 @@
 #include <getopt.h>
 
 #import "ImageDecoder.h"
+#import "BitsDecoder.h"
 #import "BitsLossless2Decoder.h"
 #import "BitLossless2ColorTableDecoder.h"
 #import "BitsJPEG3Decoder.h"
@@ -171,17 +172,17 @@ void extractImagesFromSWFFile(Information *info) {
         switch(tag) {
             case tagBits:
                 @autoreleasepool {
-                    storeImage(info, p + 2, length - 2, *(UInt16 *)p);
+                    [[BitsDecoder decoderWithInformation:info data:[NSData dataWithBytes:p length:length]] decode];
                 }
                 break;
             case tagBitsJPEG3:
                 @autoreleasepool {
-                     [[BitsJPEG3Decoder decoderWithInformation:info data:p length:length] decode];
+                     [[BitsJPEG3Decoder decoderWithInformation:info data:[NSData dataWithBytes:p length:length]] decode];
                 }
                 break;
             case tagBitsLossless2:
                 @autoreleasepool {
-                    [[BitsLossless2Decoder decoderWithInformation:info data:p length:length] decode];
+                    [[BitsLossless2Decoder decoderWithInformation:info data:[NSData dataWithBytes:p length:length]] decode];
                 }
                 break;
             case tagBitsJPEG2:

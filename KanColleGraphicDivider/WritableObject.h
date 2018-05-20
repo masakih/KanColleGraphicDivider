@@ -14,7 +14,7 @@
 
 @end
 
-@interface NSImage(WritableObject) <WritableObject>
+@interface NSData(WritableObject) <WritableObject>
 @end
 
 @interface NSBitmapImageRep(WritableObject) <WritableObject>

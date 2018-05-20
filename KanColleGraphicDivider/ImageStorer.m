@@ -11,40 +11,23 @@
 
 #import "HMZlibData.h"
 
-void saveDataWithExtension(Information *info, id data, NSString *extention, UInt16 charactorID) {
+void saveDataWithExtension(Information *info, id<WritableObject> data, NSString *extention, UInt16 charactorID) {
+    
     NSString *path = [NSString stringWithFormat:@"%@-%d.%@", info.originalName, charactorID, extention];
     path = [info.outputDir stringByAppendingPathComponent:path];
     NSURL *url = [NSURL fileURLWithPath:path];
     [data writeToURL:url atomically:YES];
 }
 
-void saveImageAsPNG(Information *info, id image, UInt16 charactorID) {
+id<WritableObject> convertImagaData(NSImage *image) {
+    
     NSData *tiffData = [image TIFFRepresentation];
     if(!tiffData) {
         fprintf(stderr, "Can not create TIFF representation.\n");
-        return;
+        return nil;
     }
     
     NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
-    NSData *imageData = [rep representationUsingType:NSPNGFileType
-                                          properties:@{}];
-    saveDataWithExtension(info, imageData, @"png", charactorID);
-}
-
-void storeImage(Information *info, const unsigned char *p, UInt32 length, UInt16 charactorID) {
-    printLog("####  TYPE IS PICTURE ####\n\n");
-    
-    printLog("CaractorID is %d\n", charactorID);
-    if([info skipCharactorID:charactorID]) return;
-    
-    if(length == 0) return;
-    
-    NSData *pic = [NSData dataWithBytes:p length:length];
-    NSImage *pict = [[NSImage alloc] initWithData:pic];
-    if(!pict) {
-        fprintf(stderr, "Can not create image from data.\n");
-        return;
-    }
-    
-    saveDataWithExtension(info, pic, @"jpg", charactorID);
+    return [rep representationUsingType:NSPNGFileType
+                             properties:@{}];
 }

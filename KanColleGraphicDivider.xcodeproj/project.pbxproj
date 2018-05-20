@@ -17,6 +17,7 @@
 		F49056A320B0789B00CF637D /* SwfContent.m in Sources */ = {isa = PBXBuildFile; fileRef = F49056A220B0789B00CF637D /* SwfContent.m */; };
 		F49056A620B078DB00CF637D /* SwfData.m in Sources */ = {isa = PBXBuildFile; fileRef = F49056A520B078DB00CF637D /* SwfData.m */; };
 		F49056A920B0794400CF637D /* SwfHeader.m in Sources */ = {isa = PBXBuildFile; fileRef = F49056A820B0794400CF637D /* SwfHeader.m */; };
+		F49056B020B16A6D00CF637D /* BitsDecoder.m in Sources */ = {isa = PBXBuildFile; fileRef = F49056AF20B16A6D00CF637D /* BitsDecoder.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -56,6 +57,8 @@
 		F49056A720B0794400CF637D /* SwfHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwfHeader.h; sourceTree = "<group>"; };
 		F49056A820B0794400CF637D /* SwfHeader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SwfHeader.m; sourceTree = "<group>"; };
 		F49056AA20B1460C00CF637D /* WritableObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WritableObject.h; sourceTree = "<group>"; };
+		F49056AE20B16A6C00CF637D /* BitsDecoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BitsDecoder.h; sourceTree = "<group>"; };
+		F49056AF20B16A6D00CF637D /* BitsDecoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BitsDecoder.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +105,8 @@
 				F490569420B0568F00CF637D /* ImageStorer.h */,
 				F490569520B0568F00CF637D /* ImageStorer.m */,
 				F490568D20B04F5300CF637D /* ImageDecoder.h */,
+				F49056AE20B16A6C00CF637D /* BitsDecoder.h */,
+				F49056AF20B16A6D00CF637D /* BitsDecoder.m */,
 				F490568E20B050D400CF637D /* BitsLossless2Decoder.h */,
 				F490568F20B050D400CF637D /* BitsLossless2Decoder.m */,
 				F490569820B059B800CF637D /* BitLossless2ColorTableDecoder.h */,
@@ -174,6 +179,7 @@
 				F490569620B0568F00CF637D /* ImageStorer.m in Sources */,
 				F490569020B050D400CF637D /* BitsLossless2Decoder.m in Sources */,
 				F49056A320B0789B00CF637D /* SwfContent.m in Sources */,
+				F49056B020B16A6D00CF637D /* BitsDecoder.m in Sources */,
 				F490569A20B059B800CF637D /* BitLossless2ColorTableDecoder.m in Sources */,
 				F44C14BB1D84F07300ADE497 /* main.m in Sources */,
 				F49056A920B0794400CF637D /* SwfHeader.m in Sources */,

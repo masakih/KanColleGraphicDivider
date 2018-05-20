@@ -15,10 +15,12 @@
 
 @protocol ImageDecoder <NSObject>
 
-+ (id)decoderWithInformation:(Information *)information data:(const unsigned char *)data length:(UInt32)length;
++ (id)decoderWithInformation:(Information *)information data:(NSData *)data;
 
 - (void)decode;
 
-- (id<WritableObject>)object;
+@property (readonly) UInt32 charactorID;
+
+@property (nullable, readonly) id<WritableObject> object;
 
 @end
