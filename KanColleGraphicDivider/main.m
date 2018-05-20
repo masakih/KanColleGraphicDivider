@@ -7,41 +7,30 @@
 //
 
 #import <Cocoa/Cocoa.h>
+
+#include "KanColleGraphicDivider.h"
 #include "SWFStructure.h"
+
+#import "Information.h"
+
 #import "HMZlibData.h"
+
+#import "ImageStorer.h"
 
 #include <getopt.h>
 
+#import "ImageDecoder.h"
+#import "BitsLossless2Decoder.h"
+#import "BitLossless2ColorTableDecoder.h"
+#import "BitsJPEG3Decoder.h"
 
-@interface Information: NSObject
-@property (copy) NSString *originalName;
-@property (copy) NSString *outputDir;
-@property (copy) NSString *filename;
-@property (copy) NSArray *charctorIds;
-@end
-
-@implementation Information
-- (bool)skipCharactorID:(UInt16) chractorid {
-    if(self.charctorIds.count == 0) return false;
-    
-    for(NSString *charID in self.charctorIds) {
-        if(charID.integerValue == chractorid) return false;
-    }
-    return true;
-}
-@end
-
-#if 0
-#define printLog(...) printLogF( __VA_ARGS__)
 void printLogF(const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);
 }
-#else
-#define printLog(...)
-#endif
+
 
 void printHex(const unsigned char *p) {
     for(int i=0;i<1;i++) {
@@ -92,221 +81,6 @@ static void version()
 {
     printf("KanColleGraphicDivider %s\n", versionString);
     exit(EXIT_SUCCESS);
-}
-
-void saveDataWithExtension(Information *info, id data, NSString *extention, UInt16 charactorID) {
-    NSString *path = [NSString stringWithFormat:@"%@-%d.%@", info.originalName, charactorID, extention];
-    path = [info.outputDir stringByAppendingPathComponent:path];
-    NSURL *url = [NSURL fileURLWithPath:path];
-    [data writeToURL:url atomically:YES];
-}
-
-void saveImageAsPNG(Information *info, id image, UInt16 charactorID) {
-    NSData *tiffData = [image TIFFRepresentation];
-    if(!tiffData) {
-        fprintf(stderr, "Can not create TIFF representation.\n");
-        return;
-    }
-    
-    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
-    NSData *imageData = [rep representationUsingType:NSPNGFileType
-                                          properties:@{}];
-    saveDataWithExtension(info, imageData, @"png", charactorID);
-}
-
-void storeImage(Information *info, const unsigned char *p, UInt32 length, UInt16 charactorID) {
-    printLog("####  TYPE IS PICTURE ####\n\n");
-    
-    printLog("CaractorID is %d\n", charactorID);
-    if([info skipCharactorID:charactorID]) return;
-    
-    if(length == 0) return;
-    
-    NSData *pic = [NSData dataWithBytes:p length:length];
-    NSImage *pict = [[NSImage alloc] initWithData:pic];
-    if(!pict) {
-        fprintf(stderr, "Can not create image from data.\n");
-        return;
-    }
-    
-    saveDataWithExtension(info, pic, @"jpg", charactorID);
-}
-
-void storeBitsJPEG3(Information *info, const unsigned char *p, UInt32 length) {
-    printLog("####  TYPE IS PICTURE ####\n\n");
-    if(length < HMSWFJPEG3HeaderSize) return;
-    
-    const HMSWFBitsJPEG3 *bitsJPEG3 = (HMSWFBitsJPEG3 *)p;
-    
-    UInt16 charactorID = bitsJPEG3->charctorID;
-    printLog("CaractorID is %d\n", charactorID);
-    if([info skipCharactorID:charactorID]) return;
-    
-    UInt32 contentLength = length - HMSWFJPEG3HeaderSize;
-    UInt32 imageSize = bitsJPEG3->imageSize;
-    p = &bitsJPEG3->imageData;
-    
-    if(imageSize == contentLength) {
-        storeImage(info, p, contentLength, charactorID);
-        return;
-    }
-    
-    // JPEGを取出し
-    NSData *pic = [NSData dataWithBytes:p length:imageSize];
-    NSImage *pict = [[NSImage alloc] initWithData:pic];
-    if(!pict) {
-        fprintf(stderr, "Can not create image from data.\n");
-        return;
-    }
-    
-    NSSize size = pict.size;
-    
-    // アルファチャンネルの取出し
-    NSData *alpha = [NSData dataWithBytes:p + imageSize length:contentLength - imageSize];
-    alpha = [alpha inflate];
-    
-    unsigned char *pp = (unsigned char *)alpha.bytes;
-    NSBitmapImageRep *alphaImageRef = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:&pp
-                                                                              pixelsWide:size.width
-                                                                              pixelsHigh:size.height
-                                                                           bitsPerSample:8
-                                                                         samplesPerPixel:1
-                                                                                hasAlpha:NO
-                                                                                isPlanar:NO
-                                                                          colorSpaceName:NSDeviceWhiteColorSpace
-                                                                             bytesPerRow:size.width
-                                                                            bitsPerPixel:0];
-    if(!alphaImageRef) {
-        fprintf(stderr, "Can not create alpha image from data.\n");
-        return;
-    }
-    
-    // 透過画像の作成
-    NSImage *image = [NSImage imageWithSize:size
-                                    flipped:NO
-                             drawingHandler:
-                      ^BOOL(NSRect dstRect) {
-                          NSRect rect = NSMakeRect(0, 0, size.width, size.height);
-                          
-                          CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
-                          CGContextSaveGState(context);
-                          CGContextClipToMask(context, NSRectToCGRect(rect), alphaImageRef.CGImage);
-                          [pict drawAtPoint:NSZeroPoint
-                                   fromRect:rect
-                                  operation:NSCompositeCopy
-                                   fraction:1.0];
-                          CGContextRestoreGState(context);
-                          
-                          return YES;
-                      }];
-    
-    saveImageAsPNG(info, image, charactorID);
-}
-
-void storeBitLossless2ColorTable(Information *info, const unsigned char *p, UInt32 length) {
-    const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)p;
-    
-    UInt16 charactorID = data->charctorID;
-    printLog("CaractorID is %d\n", charactorID);
-    if([info skipCharactorID:charactorID]) return;
-    
-    UInt8 mapSize = data->data.colorTable.colorTableSize + 1;
-    printLog("color table size -> %d\n", mapSize);
-    printLog("zipped image data size -> %d\n", length - HMSWFLossless2ColorTableHeaderSize);
-    
-    NSData *zipedContentData = [NSData dataWithBytes:&data->data.colorTable.data length:length - HMSWFLossless2ColorTableHeaderSize];
-    NSData *contentData = [zipedContentData inflate];
-    printLog("unzipped image data size -> %d\n", contentData.length);
-    
-    const UInt32 *mapP = (UInt32 *)contentData.bytes;
-    const UInt8 *colorIndexP = (UInt8 *)(mapP + mapSize);
-    
-#if 0
-    printLog("MAP TABLE\n");
-    for(int i = 0; i < mapSize; i++) {
-        printLog("0x%04x ", mapP[i]);
-    }
-    printLog("\n\n");
-#endif
-    
-    // rowサイズは4bytesアライメント
-    UInt8 skipBytes = data->width % 4;
-    
-    // ARBGカラーマップからARBGビットマップを作成
-    UInt32 *imageDataP = calloc(4, data->width * data->height);
-    if(!imageDataP) {
-        fprintf(stderr, "Can not allocate enough memory.\n");
-        return;
-    }
-    
-    UInt32 *imageDataPixel = imageDataP;
-    for(UInt16 h = 0; h < data->height; h++) {
-        for(UInt16 w = 0; w < data->width; w++) {
-            printLog("%d ", *colorIndexP);
-            *imageDataPixel++ = mapP[*colorIndexP++];
-        }
-        colorIndexP += skipBytes;
-        printLog("\n");
-    }
-    
-    // ARGBビットマップからNSBitmapImageRepを作成
-    NSData *imageData = [NSData dataWithBytes:imageDataP length:4 * data->width * data->height];
-    unsigned char *pp = (unsigned char *)imageData.bytes;
-    NSBitmapImageRep *imageRef = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:&pp
-                                                                         pixelsWide:data->width
-                                                                         pixelsHigh:data->height
-                                                                      bitsPerSample:8
-                                                                    samplesPerPixel:4
-                                                                           hasAlpha:YES
-                                                                           isPlanar:NO
-                                                                     colorSpaceName:NSCalibratedRGBColorSpace
-                                                                        bytesPerRow:data->width * 4
-                                                                       bitsPerPixel:0];
-    free(imageDataP);
-    imageDataP = NULL;
-    
-    if(!imageRef) {
-        fprintf(stderr, "Can not create ImageRef from maked bitmap.");
-        return;
-    }
-    
-    saveImageAsPNG(info, imageRef, charactorID);
-}
-void storeBitsLossless2(Information *info, const unsigned char *p, UInt32 length) {
-    printLog("####  TYPE IS PICTURE ####\n\n");
-    if(length < HMSWFLossless2HeaderSize) {
-        fprintf(stderr, "length is too short.\n");
-        return;
-    }
-    
-    const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)p;
-    
-    UInt16 charactorID = data->charctorID;
-    printLog("CaractorID is %d\n", charactorID);
-    if([info skipCharactorID:charactorID]) return;
-    
-    if(data->bitmapFormat == 3) {
-        storeBitLossless2ColorTable(info, p, length);
-        return;
-    }
-    
-    length -= HMSWFLossless2HeaderSize;
-    
-    p = &data->data.data;
-    NSData *zipedImageData = [NSData dataWithBytes:p length:length];
-    NSData *imageData = [zipedImageData inflate];
-    unsigned char *pp = (unsigned char *)imageData.bytes;
-    NSBitmapImageRep *imageRef = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:&pp
-                                                                         pixelsWide:data->width
-                                                                         pixelsHigh:data->height
-                                                                      bitsPerSample:8 * 4
-                                                                    samplesPerPixel:4
-                                                                           hasAlpha:YES
-                                                                           isPlanar:NO
-                                                                     colorSpaceName:NSCalibratedRGBColorSpace
-                                                                        bytesPerRow:data->width * 4
-                                                                       bitsPerPixel:0];
-    saveImageAsPNG(info, imageRef, charactorID);
 }
 
 void extractImagesFromSWFFile(Information *info) {
@@ -402,12 +176,12 @@ void extractImagesFromSWFFile(Information *info) {
                 break;
             case tagBitsJPEG3:
                 @autoreleasepool {
-                    storeBitsJPEG3(info, p, length);
+                     [[BitsJPEG3Decoder decoderWithInformation:info data:p length:length] decode];
                 }
                 break;
             case tagBitsLossless2:
                 @autoreleasepool {
-                    storeBitsLossless2(info, p, length);
+                    [[BitsLossless2Decoder decoderWithInformation:info data:p length:length] decode];
                 }
                 break;
             case tagBitsJPEG2:
@@ -446,11 +220,11 @@ int main(int argc, char * const *argv) {
         
 #define SHORTOPTS "ho:vc:"
         static struct option longopts[] = {
-            {"output",		required_argument,	NULL,	'o'},
-            {"charactorid",		required_argument,	NULL,	'c'},
-            {"version",		no_argument,		NULL,	'v'},
-            {"help",		no_argument,		NULL,	'h'},
-            {NULL, 0, NULL, 0}
+            {"output",      required_argument,  NULL,   'o'},
+            {"charactorid", required_argument,  NULL,   'c'},
+            {"version",     no_argument,        NULL,   'v'},
+            {"help",        no_argument,        NULL,   'h'},
+            {NULL,          0,                  NULL,   0}
         };
         
         while((opt = getopt_long(argc, argv, SHORTOPTS, longopts, NULL)) != -1) {

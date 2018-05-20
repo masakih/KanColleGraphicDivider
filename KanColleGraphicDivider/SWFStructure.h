@@ -9,6 +9,7 @@
 #ifndef SWFStructure_h
 #define SWFStructure_h
 
+#import <MacTypes.h>
 
 #pragma pack(1)
 
