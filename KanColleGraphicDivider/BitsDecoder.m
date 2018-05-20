@@ -44,7 +44,7 @@
 
 - (void)decodeUsingInformationn:(Information *)information {
     
-    saveDataWithExtension(information, self.object, @"jpg", self.charactorID);
+    saveDataWithExtension(information, self.decodedData, self.extension, self.charactorID);
 }
 
 - (UInt32) charactorID {
@@ -52,7 +52,7 @@
     return *(UInt16 *)self.data.bytes;
 }
 
-- (id<WritableObject>)object {
+- (NSData *)decodedData {
     
     NSData *contentData = [self.data subdataWithRange:NSMakeRange(2, self.length - 2)];
     if(contentData.length == 0) return nil;
@@ -64,6 +64,11 @@
     }
     
     return contentData;
+}
+
+- (NSString *)extension {
+    
+    return @"jpg";
 }
 
 @end

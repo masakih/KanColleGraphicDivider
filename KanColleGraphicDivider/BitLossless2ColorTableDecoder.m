@@ -47,7 +47,7 @@
 
 - (void)decodeUsingInformationn:(Information *)information {
     
-    saveDataWithExtension(information, self.object, @"png", self.charactorID);
+    saveDataWithExtension(information, self.decodedData, self.extension, self.charactorID);
 }
 
 - (UInt32) charactorID {
@@ -57,12 +57,17 @@
     return data->charctorID;
 }
 
-- (id<WritableObject>)object {
+- (NSData *)decodedData {
     
     return [self bitLossless2ColorTable];
 }
 
-- (id<WritableObject>)bitLossless2ColorTable {
+- (NSString *)extension {
+    
+    return @"png";
+}
+
+- (NSData *)bitLossless2ColorTable {
     
     const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)self.data.bytes;
     

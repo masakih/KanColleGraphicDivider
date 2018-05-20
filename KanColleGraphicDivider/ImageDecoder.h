@@ -10,9 +10,6 @@
 
 #import "Information.h"
 
-#import "WritableObject.h"
-
-
 @protocol ImageDecoder <NSObject>
 
 + (id)decoderWithData:(NSData *)data;
@@ -21,6 +18,8 @@
 
 @property (readonly) UInt32 charactorID;
 
-@property (nullable, readonly) id<WritableObject> object;
+@property (nullable, readonly) NSData *decodedData;
+
+@property (readonly) NSString *extension;
 
 @end

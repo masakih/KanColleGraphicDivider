@@ -49,7 +49,7 @@
 
 - (void)decodeUsingInformationn:(Information *)information {
     
-    saveDataWithExtension(information, self.object, @"png", self.charactorID);
+    saveDataWithExtension(information, self.decodedData, self.extension, self.charactorID);
 }
 
 - (UInt32) charactorID {
@@ -59,19 +59,24 @@
     return data->charctorID;
 }
 
-- (id<WritableObject>)object {
+- (NSData *)decodedData {
     
     return [self bitsLossless2];
 }
 
-- (id<WritableObject>)bitsLossless2 {
+- (NSString *)extension {
+    
+    return @"png";
+}
+
+- (NSData *)bitsLossless2 {
     
     const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)self.data.bytes;
         
     if(data->bitmapFormat == 3) {
         
         id decoder = [BitLossless2ColorTableDecoder decoderWithData:self.data];
-        return [decoder object];
+        return [decoder decodedData];
     }
     
     NSUInteger cLength = self.length - HMSWFLossless2HeaderSize;

@@ -11,7 +11,7 @@
 
 #import "HMZlibData.h"
 
-void saveDataWithExtension(Information *info, id<WritableObject> data, NSString *extention, UInt16 charactorID) {
+void saveDataWithExtension(Information *info, NSData *data, NSString *extention, UInt16 charactorID) {
     
     NSString *path = [NSString stringWithFormat:@"%@-%d.%@", info.originalName, charactorID, extention];
     path = [info.outputDir stringByAppendingPathComponent:path];
@@ -19,7 +19,7 @@ void saveDataWithExtension(Information *info, id<WritableObject> data, NSString 
     [data writeToURL:url atomically:YES];
 }
 
-id<WritableObject> convertImagaData(NSImage *image) {
+NSData *convertImagaData(NSImage *image) {
     
     NSData *tiffData = [image TIFFRepresentation];
     if(!tiffData) {

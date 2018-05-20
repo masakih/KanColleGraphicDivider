@@ -49,7 +49,7 @@
 
 - (void)decodeUsingInformationn:(Information *)information {
     
-    saveDataWithExtension(information, self.object, @"png", self.charactorID);
+    saveDataWithExtension(information, self.decodedData, self.extension, self.charactorID);
 }
 
 - (UInt32) charactorID {
@@ -59,12 +59,17 @@
     return data->charctorID;
 }
 
-- (id<WritableObject>)object {
+- (NSData *)decodedData {
     
     return [self bitsJPEG3];
 }
 
-- (id<WritableObject>)bitsJPEG3 {
+- (NSString *)extension {
+    
+    return @"png";
+}
+
+- (NSData *)bitsJPEG3 {
     
     const unsigned char *p = self.data.bytes;
     

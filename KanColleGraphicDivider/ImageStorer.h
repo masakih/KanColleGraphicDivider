@@ -9,8 +9,6 @@
 #import <Cocoa/Cocoa.h>
 #import "Information.h"
 
-#import "WritableObject.h"
-
 void saveDataWithExtension(Information *info, id data, NSString *extention, UInt16 charactorID);
 
-id<WritableObject> convertImagaData(id data);
+NSData *convertImagaData(id data);

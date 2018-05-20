@@ -56,7 +56,6 @@
 		F49056A520B078DB00CF637D /* SwfData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SwfData.m; sourceTree = "<group>"; };
 		F49056A720B0794400CF637D /* SwfHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwfHeader.h; sourceTree = "<group>"; };
 		F49056A820B0794400CF637D /* SwfHeader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SwfHeader.m; sourceTree = "<group>"; };
-		F49056AA20B1460C00CF637D /* WritableObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WritableObject.h; sourceTree = "<group>"; };
 		F49056AE20B16A6C00CF637D /* BitsDecoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BitsDecoder.h; sourceTree = "<group>"; };
 		F49056AF20B16A6D00CF637D /* BitsDecoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BitsDecoder.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -99,7 +98,6 @@
 				F49056A820B0794400CF637D /* SwfHeader.m */,
 				F49056A120B0789B00CF637D /* SwfContent.h */,
 				F49056A220B0789B00CF637D /* SwfContent.m */,
-				F49056AA20B1460C00CF637D /* WritableObject.h */,
 				F490569120B0512C00CF637D /* Information.h */,
 				F490569220B0512C00CF637D /* Information.m */,
 				F490569420B0568F00CF637D /* ImageStorer.h */,
