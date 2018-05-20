@@ -12,8 +12,6 @@
 
 @interface BitsDecoder()
 
-@property Information *information;
-
 @property NSData *data;
 
 @property (readonly) NSUInteger length;
@@ -22,18 +20,17 @@
 
 @implementation BitsDecoder
 
-+ (instancetype)decoderWithInformation:(Information *)information data:(NSData *)data {
++ (instancetype)decoderWithData:(NSData *)data {
     
-    return [[self alloc] initWithInformation:information data:data];
+    return [[self alloc] initWithData:data];
 }
 
-- (instancetype)initWithInformation:(Information *)information data:(NSData *)data {
+- (instancetype)initWithData:(NSData *)data {
     
     self = [super init];
     
     if( self ) {
         
-        self.information = information;
         self.data = data;
     }
     
@@ -45,9 +42,9 @@
     return self.data.length;
 }
 
-- (void)decode {
+- (void)decodeUsingInformationn:(Information *)information {
     
-    saveDataWithExtension(self.information, self.object, @"jpg", self.charactorID);
+    saveDataWithExtension(information, self.object, @"jpg", self.charactorID);
 }
 
 - (UInt32) charactorID {

@@ -169,20 +169,22 @@ void extractImagesFromSWFFile(Information *info) {
         if(tag == 0) break;
         
         // 画像の時の処理
+        
+        NSData *contentData = [NSData dataWithBytes:p length:length];
         switch(tag) {
             case tagBits:
                 @autoreleasepool {
-                    [[BitsDecoder decoderWithInformation:info data:[NSData dataWithBytes:p length:length]] decode];
+                    [[BitsDecoder decoderWithData:contentData] decodeUsingInformationn:info];
                 }
                 break;
             case tagBitsJPEG3:
                 @autoreleasepool {
-                     [[BitsJPEG3Decoder decoderWithInformation:info data:[NSData dataWithBytes:p length:length]] decode];
+                     [[BitsJPEG3Decoder decoderWithData:contentData] decodeUsingInformationn:info];
                 }
                 break;
             case tagBitsLossless2:
                 @autoreleasepool {
-                    [[BitsLossless2Decoder decoderWithInformation:info data:[NSData dataWithBytes:p length:length]] decode];
+                    [[BitsLossless2Decoder decoderWithData:contentData] decodeUsingInformationn:info];
                 }
                 break;
             case tagBitsJPEG2:

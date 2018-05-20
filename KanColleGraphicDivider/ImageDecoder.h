@@ -15,9 +15,9 @@
 
 @protocol ImageDecoder <NSObject>
 
-+ (id)decoderWithInformation:(Information *)information data:(NSData *)data;
++ (id)decoderWithData:(NSData *)data;
 
-- (void)decode;
+- (void)decodeUsingInformationn:(Information *)information;
 
 @property (readonly) UInt32 charactorID;
 
