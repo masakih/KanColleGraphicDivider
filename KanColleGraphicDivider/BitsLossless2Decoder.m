@@ -61,18 +61,8 @@
 
 - (NSData *)decodedData {
     
-    return [self bitsLossless2];
-}
-
-- (NSString *)extension {
-    
-    return @"png";
-}
-
-- (NSData *)bitsLossless2 {
-    
     const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)self.data.bytes;
-        
+    
     if(data->bitmapFormat == 3) {
         
         id decoder = [BitLossless2ColorTableDecoder decoderWithData:self.data];
@@ -97,6 +87,11 @@
                                                                        bitsPerPixel:0];
     
     return convertImagaData(imageRef);
+}
+
+- (NSString *)extension {
+    
+    return @"png";
 }
 
 @end

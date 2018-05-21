@@ -8,10 +8,9 @@
 
 #import "SwfContent.h"
 
+#import "BitsDecoder.h"
 #import "BitsLossless2Decoder.h"
-#import "BitLossless2ColorTableDecoder.h"
 #import "BitsJPEG3Decoder.h"
-
 
 #include "SWFStructure.h"
 
@@ -29,12 +28,11 @@ typedef enum : NSUInteger {
 
 @property (nonnull) NSData *data;
 
-@property (nullable, readwrite) SwfContent *next;
+//@property NSRange nextRange;
 
 @property TagType tagType;
-@property (readwrite) UInt32 charactorID;
 @property (nullable) NSData *contentData;
-//@property (nullable, readwrite) id<WritableObject> content;
+@property (nullable, readwrite) id<ImageDecoder> decoder;
 
 @end
 
@@ -52,14 +50,19 @@ typedef enum : NSUInteger {
     
     if( !data ) {
         
+        NSLog(@"SwfContent: Data is nil");
+        
         return nil;
     }
     
     if( self ) {
         
         self.data = data;
+        self.nextRange = NSMakeRange(NSNotFound, 0);
         
         if( ![self parse] ) {
+            
+            NSLog(@"SwfContent: Parse Error");
             
             return nil;
         }
@@ -68,67 +71,85 @@ typedef enum : NSUInteger {
     return self;
 }
 
-- (id<WritableObject>)content {
+- (SwfContent *)next {
+    
+    if( self.nextRange.location == NSNotFound ) {
+        
+        return nil;
+    }
+    
+    if( self.data.length < NSMaxRange(self.nextRange) ) {
+        
+        NSLog(@"Next size is Overflow");
+        exit(-10);
+    }
+    
+    return [SwfContent contentWithData:[self.data subdataWithRange:self.nextRange]];
+}
+
+- (UInt32)charactorID {
+    
+    return self.decoder.charactorID;
+}
+
+- (NSData *)content {
+    
+    return self.decoder.decodedData;
+}
+
+- (NSString *)extension {
+    
+    return self.decoder.extension;
+}
+
+- (BOOL)parse {
+        
+    HMSWFTag *tagP = (HMSWFTag *)self.data.bytes;
+    NSUInteger tagLength = 2;
+    self.tagType = tagP->tagAndLength >> 6;
+    UInt32 contentLength = tagP->tagAndLength & 0x3F;
+    if(contentLength == 0x3F) {
+        contentLength = tagP->extraLength;
+        tagLength += 4;
+    }
+    
+    if( self.tagType == 0 ) {
+        
+        return YES;
+    }
+    
+    if( self.data.length < (tagLength + contentLength) ) {
+        
+        NSLog(@"Content size is Overflow");
+        exit(-10);
+    }
+    self.contentData = [self.data subdataWithRange:NSMakeRange(tagLength, contentLength)];
+    
+    NSUInteger nextPos = tagLength + contentLength;
+    NSUInteger length = self.data.length - nextPos;
+    self.nextRange = NSMakeRange(nextPos, length);
     
     switch (self.tagType) {
             
         case tagBits:
             
-            //
+            self.decoder = [BitsDecoder decoderWithData:self.contentData];
             break;
             
         case tagBitsJPEG3:
             
-            
-//            return [[BitsJPEG3Decoder decoderWithInformation:info data:p length:length] decode];
-            //
+            self.decoder = [BitsJPEG3Decoder decoderWithData:self.contentData];
             break;
             
         case tagBitsLossless2:
             
-            //
+            self.decoder = [BitsLossless2Decoder decoderWithData:self.contentData];
             break;
             
         default:
+            
             break;
     }
-    
-    
-    return nil;
-}
-
-- (BOOL)parse {
-    
-    const unsigned char *p = self.data.bytes;
-    
-    HMSWFTag *tagP = (HMSWFTag *)p;
-    NSUInteger tagLength = 2;
-    p += 2;
-    UInt32 tagType = tagP->tagAndLength >> 6;
-    UInt32 contentLength = tagP->tagAndLength & 0x3F;
-    if(contentLength == 0x3F) {
-        contentLength = tagP->extraLength;
-        p += 4;
-        tagLength += 4;
-    }
-    
-    if( tagType == 0 ) {
-        
-        self.next = nil;
-        
-        return YES;
-    }
-    
-    if( contentLength == 0 ) {
-        
-        return NO;
-    }
-    
-    self.contentData = [self.data subdataWithRange:NSMakeRange(tagLength, contentLength)];
-    
-    NSUInteger nextPos = tagLength + contentLength;
-    NSUInteger length = self.data.length - nextPos;
-    self.next = [SwfContent contentWithData:[self.data subdataWithRange:NSMakeRange(nextPos, length)]];
     
     return YES;
 }

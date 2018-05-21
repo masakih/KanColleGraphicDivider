@@ -61,16 +61,6 @@
 
 - (NSData *)decodedData {
     
-    return [self bitsJPEG3];
-}
-
-- (NSString *)extension {
-    
-    return @"png";
-}
-
-- (NSData *)bitsJPEG3 {
-    
     const unsigned char *p = self.data.bytes;
     
     if(self.length < HMSWFJPEG3HeaderSize) return nil;
@@ -136,6 +126,11 @@
                       }];
     
     return convertImagaData(image);
+}
+
+- (NSString *)extension {
+    
+    return @"png";
 }
 
 @end

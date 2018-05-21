@@ -21,7 +21,6 @@ typedef enum : NSUInteger {
 } SwfType;
 
 
-
 @interface SwfHeader()
 
 @property (nonnull) NSData *data;
@@ -43,12 +42,21 @@ typedef enum : NSUInteger {
     
     if( !data ) {
         
+        NSLog(@"SwfHeader: Data is nil.");
+        
         return nil;
     }
     
     if( self ) {
         
         self.data = data;
+        
+        if( ![self parse] ) {
+            
+            NSLog(@"SwfHeader: Parse error");
+            
+            return nil;
+        }
     }
     
     return self;
@@ -83,13 +91,13 @@ typedef enum : NSUInteger {
             
         default:
             
+            NSLog(@"Signature is Unknown.");
+            
             return NO;
     }
     
-    const unsigned char *p = self.data.bytes;
-    
     // RECT: 上位5bitsが各要素のサイズを表す 要素は4つ
-    UInt8 size = *(UInt8 *)p;
+    UInt8 size = *(UInt8 *)self.data.bytes;
     size >>= 3;
     int offset = size * 4;
     offset += 5; // 上位5bit分
@@ -97,27 +105,29 @@ typedef enum : NSUInteger {
     int div = offset / 8;
     int mod = offset % 8;
     offset = div + (mod == 0 ? 0 : 1); // アライメント
-    p += offset;
     
     // fps: 8.8 fixed number.
-    p += 2;
+    // 2 bytes.
     
     // frame count
-    p += 2;
+    // 2 bytes.
     
-    UInt32 loc = offset + 2 + 2;
+    NSUInteger contentLoc = offset + 2 + 2;
+    NSUInteger contentLength = self.data.length - contentLoc;
     
-    self.next = [self.data subdataWithRange:NSMakeRange(loc, self.data.length - loc)];
+    NSRange contentRange = NSMakeRange(contentLoc, contentLength);
+    
+    self.next = [self.data subdataWithRange:contentRange];
     
     return YES;
 }
 
 SwfType typeOf(NSData *data) {
     
-    NSString *signature = [[NSString alloc] initWithBytesNoCopy:data.bytes
+    NSString *signature = [[NSString alloc] initWithBytesNoCopy:(void *)data.bytes
                                                          length:3
                                                        encoding:NSUTF8StringEncoding
-                                                freeWhenDone:YES];
+                                                   freeWhenDone:NO];
     if( [signature isEqualToString:@"FWS"] ) {
         
         return normalSWFType;

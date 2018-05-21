@@ -8,22 +8,14 @@
 
 #import <Cocoa/Cocoa.h>
 
-#include "KanColleGraphicDivider.h"
-#include "SWFStructure.h"
-
-#import "Information.h"
-
-#import "HMZlibData.h"
-
-#import "ImageStorer.h"
-
 #include <getopt.h>
 
-#import "ImageDecoder.h"
-#import "BitsDecoder.h"
-#import "BitsLossless2Decoder.h"
-#import "BitLossless2ColorTableDecoder.h"
-#import "BitsJPEG3Decoder.h"
+#include "KanColleGraphicDivider.h"
+
+#import "Information.h"
+#import "ImageStorer.h"
+
+#import "SwfData.h"
 
 void printLogF(const char *fmt, ...) {
     va_list ap;
@@ -31,7 +23,6 @@ void printLogF(const char *fmt, ...) {
     vfprintf(stderr, fmt, ap);
     va_end(ap);
 }
-
 
 void printHex(const unsigned char *p) {
     for(int i=0;i<1;i++) {
@@ -41,17 +32,6 @@ void printHex(const unsigned char *p) {
         printLog("\n");
     }
 }
-
-enum {
-    tagBits = 6,
-    tagJPEGTables = 8,  // not supported
-    tagBitsJPEG2 = 21,  // not supported
-    tagBitsJPEG3 = 35,
-    tagBitsLossless = 20,  // not supported
-    tagBitsLossless2 = 36,
-    tagBitsJPEG4 = 90,  // not supported
-    
-};
 
 const char *toolName;
 const char *versionString = "1.0";
@@ -101,111 +81,27 @@ void extractImagesFromSWFFile(Information *info) {
     info.originalName = [filePath lastPathComponent];
     info.originalName = [info.originalName stringByDeletingPathExtension];
     
-    printHex(data.bytes);
+    SwfData *swf = [SwfData dataWithData:data];
+    SwfContent *content = swf.firstContent;
     
-    // ヘッダの処理開始
-    const HMSWFHeader *header = data.bytes;
-    printLog("type\t%c%c%c\n", header->type[0], header->type[1], header->type[2]);
-    printLog("version\t%d\n", header->version);
-    printLog("file size\t0x%x (%d)\n", header->f.f, header->f.f);
-    data = [data subdataWithRange:NSMakeRange(8, data.length - 8)];
-    printHex(data.bytes);
-    
-    if(header->type[0] != 'F' && header->type[0] != 'C') {
-        fprintf(stderr, "File %s is not SWF.\n", info.filename.UTF8String);
-        return;
-    }
-    if(header->type[1] != 'W' || header->type[2] != 'S') {
-        fprintf(stderr, "File %s is not SWF.\n", info.filename.UTF8String);
-        return;
-    }
-    
-    // シグニチャがCの時はコンテントはzlibで圧縮されている
-    if(header->type[0] == 'C') {
-        data = [data inflate];
-        printHex(data.bytes);
-    }
-    
-    const unsigned char *p = data.bytes;
-    
-    // RECT: 上位5bitsが各要素のサイズを表す 要素は4つ
-    UInt8 size = *(UInt8 *)p;
-    size >>= 3;
-    printLog("size -> %u (%x)\n", size,  size);
-    int offset = size * 4;
-    offset += 5; // 上位5bit分
-    // bit -> byte
-    int div = offset / 8;
-    int mod = offset % 8;
-    offset = div + (mod == 0 ? 0 : 1); // アライメント
-    printLog("offset -> %d\n", offset);
-    p += offset;
-    
-    // fps: 8.8 fixed number.
-    printLog("fps -> %u.%u\n", *(UInt8 *)(p + 1), *(UInt8 *)p);
-    p += 2;
-    
-    // frame count
-    printLog("frame count -> %u\n", *(UInt16 *)p);
-    p += 2;
-    
-    // タグの処理開始
-    int tagCount = 0;
-    while(1) {
-        printHex(p);
+    while( content ) {
         
-        HMSWFTag *tagP = (HMSWFTag *)p;
-        p += 2;
-        printLog("tag and length -> 0x%04x\n", tagP->tagAndLength);
-        UInt32 tag = tagP->tagAndLength >> 6;
-        UInt32 length = tagP->tagAndLength & 0x3F;
-        if(length == 0x3F) {
-            length = tagP->extraLength;
-            p += 4;
-        }
-        printLog("tag -> %u\nlength -> %u\n", tag, length);
+        SwfContent *aContent = content;
+        content = aContent.next;
         
-        // tag == 0 終了タグ
-        if(tag == 0) break;
-        
-        // 画像の時の処理
-        
-        NSData *contentData = [NSData dataWithBytes:p length:length];
-        switch(tag) {
-            case tagBits:
-                @autoreleasepool {
-                    [[BitsDecoder decoderWithData:contentData] decodeUsingInformationn:info];
-                }
-                break;
-            case tagBitsJPEG3:
-                @autoreleasepool {
-                     [[BitsJPEG3Decoder decoderWithData:contentData] decodeUsingInformationn:info];
-                }
-                break;
-            case tagBitsLossless2:
-                @autoreleasepool {
-                    [[BitsLossless2Decoder decoderWithData:contentData] decodeUsingInformationn:info];
-                }
-                break;
-            case tagBitsJPEG2:
-            case tagBitsLossless:
-            case tagBitsJPEG4:
-            case tagJPEGTables:
-                if(length > 0) {
-                    fprintf(stderr, "Not supported type. (tag=%d)\n", tag);
-                }
-                break;
+        NSData *data = aContent.content;
+        if( !data ) {
+            
+            continue;
         }
         
-        p += length;
-        tagCount++;
-        
-        if(tagCount > 200) {
-            return;
+        if( [info skipCharactorID:aContent.charactorID] ) {
+            
+            continue;
         }
+        
+        saveDataWithExtension(info, data, aContent.extension, aContent.charactorID);
     }
-    
-    printLog("tag Count -> %d\n", tagCount);
 }
 
 int main(int argc, char * const *argv) {

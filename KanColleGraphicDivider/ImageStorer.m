@@ -9,8 +9,6 @@
 #include "KanColleGraphicDivider.h"
 #import "ImageStorer.h"
 
-#import "HMZlibData.h"
-
 void saveDataWithExtension(Information *info, NSData *data, NSString *extention, UInt16 charactorID) {
     
     NSString *path = [NSString stringWithFormat:@"%@-%d.%@", info.originalName, charactorID, extention];

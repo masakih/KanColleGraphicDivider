@@ -8,13 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Information.h"
-
 @protocol ImageDecoder <NSObject>
 
 + (id)decoderWithData:(NSData *)data;
-
-- (void)decodeUsingInformationn:(Information *)information;
 
 @property (readonly) UInt32 charactorID;
 

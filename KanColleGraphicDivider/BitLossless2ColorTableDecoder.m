@@ -59,16 +59,6 @@
 
 - (NSData *)decodedData {
     
-    return [self bitLossless2ColorTable];
-}
-
-- (NSString *)extension {
-    
-    return @"png";
-}
-
-- (NSData *)bitLossless2ColorTable {
-    
     const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)self.data.bytes;
     
     UInt8 mapSize = data->data.colorTable.colorTableSize + 1;
@@ -82,7 +72,7 @@
     // rowサイズは4bytesアライメント
     UInt8 skipBytes = data->width % 4;
     
-    // ARBGカラーマップからARBGビットマップを作成
+    // ARGBカラーマップからARGBビットマップを作成
     UInt32 *imageDataP = calloc(4, data->width * data->height);
     if(!imageDataP) {
         fprintf(stderr, "Can not allocate enough memory.\n");
@@ -114,6 +104,11 @@
     imageDataP = NULL;
     
     return convertImagaData(imageRef);
+}
+
+- (NSString *)extension {
+    
+    return @"png";
 }
 
 @end
