@@ -10,26 +10,8 @@
 
 #include <getopt.h>
 
-#include "KanColleGraphicDivider.h"
-
 #import "Information.h"
 #import "SWFDecodeProcessor.h"
-
-void printLogF(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
-}
-
-void printHex(const unsigned char *p) {
-    for(int i=0;i<1;i++) {
-        for(int j=0;j<16;j++) {
-            printLog("%02x ", *p++);
-        }
-        printLog("\n");
-    }
-}
 
 const char *toolName;
 const char *versionString = "1.0";
@@ -39,8 +21,8 @@ const char *toolNameStr(const char *argv0)
     return [[[NSString stringWithFormat:@"%s", argv0] lastPathComponent] fileSystemRepresentation];
 }
 
-static void usage(int exitVal, FILE *fp)
-{
+static void usage(int exitVal, FILE *fp) {
+    
     fprintf(fp, "Usage: %s [OPTIONS] input-swf-file\n", toolName);
     
     fprintf(fp, "\n");
@@ -56,8 +38,8 @@ static void usage(int exitVal, FILE *fp)
     
     exit(exitVal);
 }
-static void version()
-{
+static void version() {
+    
     printf("KanColleGraphicDivider %s\n", versionString);
     exit(EXIT_SUCCESS);
 }
@@ -85,6 +67,7 @@ int main(int argc, char * const *argv) {
         };
         
         while((opt = getopt_long(argc, argv, SHORTOPTS, longopts, NULL)) != -1) {
+            
             switch(opt) {
                 case 'o':
                     oFilename = optarg;
@@ -105,39 +88,46 @@ int main(int argc, char * const *argv) {
         }
         
         if(optind >= argc) {
+            
             usage(EXIT_FAILURE, stderr);
         }
         
         if(oFilename) {
+            
             outputDir = [[NSString alloc] initWithUTF8String:oFilename];
             if( outputDir.length == 0 ) {
+                
                 fprintf(stderr, "Output directory:%s can not convert file represendation.\n", oFilename);
                 exit(EXIT_FAILURE);
             }
             NSFileManager *fm = [NSFileManager defaultManager];
             BOOL isDir = NO;
             if(![fm fileExistsAtPath:outputDir isDirectory:&isDir] || !isDir) {
+                
                 fprintf(stderr, "Output directory:%s is not found or not directory.\n", outputDir.UTF8String);
                 exit(EXIT_FAILURE);
             }
+            
         } else {
+            
             NSFileManager *fm = [NSFileManager defaultManager];
             outputDir = fm.currentDirectoryPath;
         }
         
         if(charactorid) {
+            
             NSString *charactoridsString = [[NSString alloc] initWithUTF8String:charactorid];
             NSArray *ids = [charactoridsString componentsSeparatedByString:@","];
             if(ids.count != 0) {
-                charactorIds = ids;
                 
-                printLog("CaractorIDs is %s\n", [NSString stringWithFormat:@"%@", ids].fileSystemRepresentation);
+                charactorIds = ids;
             }
         }
                 
         dispatch_group_t group = dispatch_group_create();
         dispatch_queue_t queue = dispatch_queue_create("Create image", DISPATCH_QUEUE_CONCURRENT);
         for(int filePos = optind; filePos < argc; filePos++) {
+            
             const char *filename = argv[filePos];
             Information *info = [Information new];
             info.outputDir = outputDir;
@@ -154,4 +144,3 @@ int main(int argc, char * const *argv) {
     }
     return 0;
 }
-

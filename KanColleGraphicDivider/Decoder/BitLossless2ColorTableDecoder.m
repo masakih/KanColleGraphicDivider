@@ -8,8 +8,7 @@
 
 #import "BitLossless2ColorTableDecoder.h"
 
-#include "KanColleGraphicDivider.h"
-#import "Information.h"
+#include "SWFStructure.h"
 #import "ImageDataConverter.h"
 
 #import "HMZlibData.h"
@@ -71,13 +70,16 @@
     // ARGBカラーマップからARGBビットマップを作成
     UInt32 *imageDataP = calloc(4, data->width * data->height);
     if(!imageDataP) {
+        
         fprintf(stderr, "Can not allocate enough memory.\n");
         return nil;
     }
     
     UInt32 *imageDataPixel = imageDataP;
     for(UInt16 h = 0; h < data->height; h++) {
+        
         for(UInt16 w = 0; w < data->width; w++) {
+            
             *imageDataPixel++ = mapP[*colorIndexP++];
         }
         colorIndexP += skipBytes;

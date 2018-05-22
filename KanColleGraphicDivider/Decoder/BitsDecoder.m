@@ -52,6 +52,7 @@
     
     NSImage *pict = [[NSImage alloc] initWithData:contentData];
     if(!pict) {
+        
         fprintf(stderr, "Can not create image from data.\n");
         return nil;
     }

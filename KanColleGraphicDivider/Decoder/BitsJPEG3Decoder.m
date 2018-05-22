@@ -8,7 +8,7 @@
 
 #import "BitsJPEG3Decoder.h"
 
-#include "KanColleGraphicDivider.h"
+#include "SWFStructure.h"
 #import "ImageDataConverter.h"
 
 #import "BitsDecoder.h"
@@ -75,6 +75,7 @@
     NSData *pic = [NSData dataWithBytes:p length:imageSize];
     NSImage *pict = [[NSImage alloc] initWithData:pic];
     if(!pict) {
+        
         fprintf(stderr, "Can not create image from data.\n");
         return nil;
     }
@@ -97,6 +98,7 @@
                                                                              bytesPerRow:size.width
                                                                             bitsPerPixel:0];
     if(!alphaImageRef) {
+        
         fprintf(stderr, "Can not create alpha image from data.\n");
         return nil;
     }

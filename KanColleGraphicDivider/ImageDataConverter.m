@@ -12,11 +12,13 @@ NSData *convertToPNGImagaData(id<ImageConvertible> image) {
     
     NSData *tiffData = [image TIFFRepresentation];
     if(!tiffData) {
+        
         fprintf(stderr, "Can not create TIFF representation.\n");
         return nil;
     }
     
     NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:tiffData];
+    
     return [rep representationUsingType:NSPNGFileType
                              properties:@{}];
 }

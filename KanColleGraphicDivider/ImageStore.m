@@ -6,7 +6,6 @@
 //  Copyright © 2018年 Hori,Masaki. All rights reserved.
 //
 
-#include "KanColleGraphicDivider.h"
 #import "ImageStore.h"
 
 @interface ImageStore()

@@ -8,7 +8,7 @@
 
 #import "BitsLossless2Decoder.h"
 
-#include "KanColleGraphicDivider.h"
+#include "SWFStructure.h"
 #import "ImageDataConverter.h"
 
 #import "HMZlibData.h"

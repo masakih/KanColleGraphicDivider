@@ -51,7 +51,6 @@
 		F490569220B0512C00CF637D /* Information.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Information.m; sourceTree = "<group>"; };
 		F490569420B0568F00CF637D /* ImageStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageStore.h; sourceTree = "<group>"; };
 		F490569520B0568F00CF637D /* ImageStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ImageStore.m; sourceTree = "<group>"; };
-		F490569720B0584600CF637D /* KanColleGraphicDivider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KanColleGraphicDivider.h; sourceTree = "<group>"; };
 		F490569820B059B800CF637D /* BitLossless2ColorTableDecoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BitLossless2ColorTableDecoder.h; sourceTree = "<group>"; };
 		F490569920B059B800CF637D /* BitLossless2ColorTableDecoder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BitLossless2ColorTableDecoder.m; sourceTree = "<group>"; };
 		F490569B20B05B9400CF637D /* BitsJPEG3Decoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BitsJPEG3Decoder.h; sourceTree = "<group>"; };
@@ -97,7 +96,6 @@
 			isa = PBXGroup;
 			children = (
 				F486709E20B30A3D00DB9579 /* mics */,
-				F490569720B0584600CF637D /* KanColleGraphicDivider.h */,
 				F44C14C11D84F27500ADE497 /* SWFStructure.h */,
 				F44C14BA1D84F07300ADE497 /* main.m */,
 				F486709C20B30A2300DB9579 /* SWFParser */,

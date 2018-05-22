@@ -8,7 +8,6 @@
 
 #import "Information.h"
 
-
 @interface Information()
 
 @property (copy, readwrite) NSURL *originalURL;
