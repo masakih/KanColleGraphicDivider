@@ -8,7 +8,7 @@
 
 #import "BitsDecoder.h"
 
-#import "ImageStorer.h"
+#import "ImageStore.h"
 
 @interface BitsDecoder()
 

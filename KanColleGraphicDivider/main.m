@@ -13,7 +13,7 @@
 #include "KanColleGraphicDivider.h"
 
 #import "Information.h"
-#import "ImageStorer.h"
+#import "ImageStore.h"
 
 #import "SwfData.h"
 

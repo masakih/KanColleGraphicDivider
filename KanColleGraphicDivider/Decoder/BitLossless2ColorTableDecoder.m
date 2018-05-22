@@ -9,7 +9,7 @@
 #import "BitLossless2ColorTableDecoder.h"
 
 #include "KanColleGraphicDivider.h"
-#import "ImageStorer.h"
+#import "ImageStore.h"
 
 #import "HMZlibData.h"
 

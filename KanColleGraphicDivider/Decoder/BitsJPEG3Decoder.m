@@ -9,7 +9,7 @@
 #import "BitsJPEG3Decoder.h"
 
 #include "KanColleGraphicDivider.h"
-#import "ImageStorer.h"
+#import "ImageStore.h"
 
 #import "BitsDecoder.h"
 

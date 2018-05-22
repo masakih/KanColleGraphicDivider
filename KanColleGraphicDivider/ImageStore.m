@@ -1,5 +1,5 @@
 //
-//  ImageStorer.m
+//  ImageStore.m
 //  KanColleGraphicDivider
 //
 //  Created by Hori,Masaki on 2018/05/19.
@@ -7,7 +7,7 @@
 //
 
 #include "KanColleGraphicDivider.h"
-#import "ImageStorer.h"
+#import "ImageStore.h"
 
 void saveDataWithExtension(Information *info, NSData *data, NSString *extention, UInt16 charactorID) {
     

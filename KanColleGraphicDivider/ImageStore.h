@@ -1,5 +1,5 @@
 //
-//  ImageStorer.h
+//  ImageStore.h
 //  KanColleGraphicDivider
 //
 //  Created by Hori,Masaki on 2018/05/19.
