@@ -39,6 +39,13 @@
     path = [self.information.outputDir stringByAppendingPathComponent:path];
     NSURL *url = [NSURL fileURLWithPath:path];
     
+    if( !self.information.forceOverWrite && [url checkResourceIsReachableAndReturnError:nil] ) {
+        
+        fprintf(stderr, "%s is already exist.\n", url.path.UTF8String);
+        
+        return;
+    }
+    
     [decoder.decodedData writeToURL:url atomically:YES];
 }
 

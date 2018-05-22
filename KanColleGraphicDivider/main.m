@@ -33,6 +33,8 @@ static void usage(int exitVal, FILE *fp) {
     fprintf(fp, "\textracted images output to output-directory.\n");
     fprintf(fp, "  -v, --version\n");
     fprintf(fp, "\toutput version information and exit.\n");
+    fprintf(fp, "  -f, --force\n");
+    fprintf(fp, "\tif set, force orver write outputfile.\n");
     fprintf(fp, "  -h, --help\n");
     fprintf(fp, "\tdisplay this help and text.\n");
     
@@ -48,6 +50,7 @@ int main(int argc, char * const *argv) {
     
     NSString *outputDir = nil;
     NSArray *charactorIds = nil;
+    BOOL forceOverwrite = NO;
     
     @autoreleasepool {
         // 引数の処理
@@ -57,10 +60,11 @@ int main(int argc, char * const *argv) {
         
         toolName = toolNameStr(argv[0]);
         
-#define SHORTOPTS "ho:vc:"
+#define SHORTOPTS "fho:vc:"
         static struct option longopts[] = {
             {"output",      required_argument,  NULL,   'o'},
             {"charactorid", required_argument,  NULL,   'c'},
+            {"force",       no_argument,        NULL,   'f'},
             {"version",     no_argument,        NULL,   'v'},
             {"help",        no_argument,        NULL,   'h'},
             {NULL,          0,                  NULL,   0}
@@ -74,6 +78,9 @@ int main(int argc, char * const *argv) {
                     break;
                 case 'c':
                     charactorid = optarg;
+                    break;
+                case 'f':
+                    forceOverwrite = YES;
                     break;
                 case 'h':
                     usage(EXIT_SUCCESS, stdout);
@@ -133,6 +140,7 @@ int main(int argc, char * const *argv) {
             info.outputDir = outputDir;
             info.charctorIds = charactorIds;
             info.filename = [[NSString alloc] initWithUTF8String:filename];
+            info.forceOverWrite = forceOverwrite;
             
             dispatch_group_async(group, queue, ^{
                 

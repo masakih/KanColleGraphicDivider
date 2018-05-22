@@ -16,6 +16,7 @@
 @property (copy) NSString *outputDir;
 @property (copy) NSString *filename;
 @property (copy) NSArray *charctorIds;
+@property BOOL forceOverWrite;
 
 - (BOOL)skipCharactorID:(UInt16) chractorid;
 
