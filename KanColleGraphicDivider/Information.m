@@ -11,9 +11,9 @@
 
 @interface Information()
 
-@property (readwrite) NSURL *originalURL;
+@property (copy, readwrite) NSURL *originalURL;
 
-@property (copy, nonatomic, readwrite) NSString *originalName;
+@property (copy, readwrite) NSString *originalName;
 
 @end
 
@@ -26,6 +26,7 @@
     if(self.charctorIds.count == 0) return false;
     
     for(NSString *charID in self.charctorIds) {
+        
         if(charID.integerValue == chractorid) return false;
     }
     return true;
@@ -38,6 +39,7 @@
     NSString *filePath = [filename copy];
     
     if(![filePath hasPrefix:@"/"]) {
+        
         NSFileManager *fm = [NSFileManager defaultManager];
         filePath = [fm.currentDirectoryPath stringByAppendingPathComponent:filePath];
     }

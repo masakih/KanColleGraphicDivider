@@ -10,8 +10,8 @@
 
 @interface Information: NSObject
 
-@property (readonly) NSURL *originalURL;
-@property (copy, nonatomic, readonly) NSString *originalName;
+@property (copy, readonly) NSURL *originalURL;
+@property (copy, readonly) NSString *originalName;
 
 @property (copy) NSString *outputDir;
 @property (copy) NSString *filename;

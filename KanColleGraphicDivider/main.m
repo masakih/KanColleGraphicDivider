@@ -13,9 +13,7 @@
 #include "KanColleGraphicDivider.h"
 
 #import "Information.h"
-#import "ImageStore.h"
-
-#import "SwfData.h"
+#import "SWFDecodeProcessor.h"
 
 void printLogF(const char *fmt, ...) {
     va_list ap;
@@ -62,28 +60,6 @@ static void version()
 {
     printf("KanColleGraphicDivider %s\n", versionString);
     exit(EXIT_SUCCESS);
-}
-
-void extractImagesFromSWFFile(Information *info) {
-    
-    NSData *data = [NSData dataWithContentsOfURL:info.originalURL];
-    if(!data) {
-        fprintf(stderr, "Can not open %s.\n", info.filename.UTF8String);
-        return;
-    }
-    
-    SwfData *swf = [SwfData dataWithData:data];
-    SwfContent *content = swf.firstContent;
-    
-    ImageStore *store = [ImageStore imageStoreWithInformation:info];
-    
-    while( content ) {
-        
-        SwfContent *aContent = content;
-        content = aContent.next;
-        
-        [store store:content.decoder];
-    }
 }
 
 int main(int argc, char * const *argv) {
@@ -169,7 +145,9 @@ int main(int argc, char * const *argv) {
             info.filename = [[NSString alloc] initWithUTF8String:filename];
             
             dispatch_group_async(group, queue, ^{
-                extractImagesFromSWFFile(info);
+                
+                SWFDecodeProcessor *processor = [SWFDecodeProcessor swfDecodeProcessorWithInformation:info];
+                [processor process];
             });
         }
         dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
