@@ -65,21 +65,12 @@ static void version()
 }
 
 void extractImagesFromSWFFile(Information *info) {
-    NSString *filePath = info.filename;
-    if(![filePath hasPrefix:@"/"]) {
-        NSFileManager *fm = [NSFileManager defaultManager];
-        filePath = [fm.currentDirectoryPath stringByAppendingPathComponent:filePath];
-    }
     
-    NSURL *url = [NSURL fileURLWithPath:filePath];
-    NSData *data = [NSData dataWithContentsOfURL:url];
+    NSData *data = [NSData dataWithContentsOfURL:info.originalURL];
     if(!data) {
         fprintf(stderr, "Can not open %s.\n", info.filename.UTF8String);
         return;
     }
-    
-    info.originalName = [filePath lastPathComponent];
-    info.originalName = [info.originalName stringByDeletingPathExtension];
     
     SwfData *swf = [SwfData dataWithData:data];
     SwfContent *content = swf.firstContent;

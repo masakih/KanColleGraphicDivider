@@ -9,11 +9,14 @@
 #import <Foundation/Foundation.h>
 
 @interface Information: NSObject
-@property (copy) NSString *originalName;
+
+@property (readonly) NSURL *originalURL;
+@property (copy, nonatomic, readonly) NSString *originalName;
+
 @property (copy) NSString *outputDir;
 @property (copy) NSString *filename;
 @property (copy) NSArray *charctorIds;
 
-- (bool)skipCharactorID:(UInt16) chractorid;
+- (BOOL)skipCharactorID:(UInt16) chractorid;
 
 @end
