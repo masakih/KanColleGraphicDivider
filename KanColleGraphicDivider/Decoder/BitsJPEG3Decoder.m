@@ -9,7 +9,7 @@
 #import "BitsJPEG3Decoder.h"
 
 #include "KanColleGraphicDivider.h"
-#import "ImageStore.h"
+#import "ImageDataConverter.h"
 
 #import "BitsDecoder.h"
 
@@ -45,11 +45,6 @@
 - (NSUInteger)length {
     
     return self.data.length;
-}
-
-- (void)decodeUsingInformationn:(Information *)information {
-    
-    saveDataWithExtension(information, self.decodedData, self.extension, self.charactorID);
 }
 
 - (UInt32) charactorID {
@@ -125,7 +120,7 @@
                           return YES;
                       }];
     
-    return convertImagaData(image);
+    return convertToPNGImagaData(image);
 }
 
 - (NSString *)extension {

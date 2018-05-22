@@ -9,7 +9,8 @@
 #import "BitLossless2ColorTableDecoder.h"
 
 #include "KanColleGraphicDivider.h"
-#import "ImageStore.h"
+#import "Information.h"
+#import "ImageDataConverter.h"
 
 #import "HMZlibData.h"
 
@@ -43,11 +44,6 @@
 - (NSUInteger)length {
     
     return self.data.length;
-}
-
-- (void)decodeUsingInformationn:(Information *)information {
-    
-    saveDataWithExtension(information, self.decodedData, self.extension, self.charactorID);
 }
 
 - (UInt32) charactorID {
@@ -103,7 +99,7 @@
     free(imageDataP);
     imageDataP = NULL;
     
-    return convertImagaData(imageRef);
+    return convertToPNGImagaData(imageRef);
 }
 
 - (NSString *)extension {

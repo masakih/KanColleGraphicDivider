@@ -8,8 +8,6 @@
 
 #import "BitsDecoder.h"
 
-#import "ImageStore.h"
-
 @interface BitsDecoder()
 
 @property NSData *data;
@@ -40,11 +38,6 @@
 - (NSUInteger)length {
     
     return self.data.length;
-}
-
-- (void)decodeUsingInformationn:(Information *)information {
-    
-    saveDataWithExtension(information, self.decodedData, self.extension, self.charactorID);
 }
 
 - (UInt32) charactorID {

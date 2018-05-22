@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		F44C14BB1D84F07300ADE497 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F44C14BA1D84F07300ADE497 /* main.m */; };
 		F44C14C41D85083E00ADE497 /* HMZlibData.m in Sources */ = {isa = PBXBuildFile; fileRef = F44C14C31D85083E00ADE497 /* HMZlibData.m */; };
+		F48670A120B43D4B00DB9579 /* ImageDataConverter.m in Sources */ = {isa = PBXBuildFile; fileRef = F48670A020B43D4B00DB9579 /* ImageDataConverter.m */; };
 		F490569020B050D400CF637D /* BitsLossless2Decoder.m in Sources */ = {isa = PBXBuildFile; fileRef = F490568F20B050D400CF637D /* BitsLossless2Decoder.m */; };
 		F490569320B0512C00CF637D /* Information.m in Sources */ = {isa = PBXBuildFile; fileRef = F490569220B0512C00CF637D /* Information.m */; };
 		F490569620B0568F00CF637D /* ImageStore.m in Sources */ = {isa = PBXBuildFile; fileRef = F490569520B0568F00CF637D /* ImageStore.m */; };
@@ -38,6 +39,8 @@
 		F44C14C11D84F27500ADE497 /* SWFStructure.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SWFStructure.h; sourceTree = "<group>"; };
 		F44C14C21D85083E00ADE497 /* HMZlibData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HMZlibData.h; sourceTree = "<group>"; };
 		F44C14C31D85083E00ADE497 /* HMZlibData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HMZlibData.m; sourceTree = "<group>"; };
+		F486709F20B43D4B00DB9579 /* ImageDataConverter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageDataConverter.h; sourceTree = "<group>"; };
+		F48670A020B43D4B00DB9579 /* ImageDataConverter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ImageDataConverter.m; sourceTree = "<group>"; };
 		F490568D20B04F5300CF637D /* ImageDecoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageDecoder.h; sourceTree = "<group>"; };
 		F490568E20B050D400CF637D /* BitsLossless2Decoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BitsLossless2Decoder.h; sourceTree = "<group>"; };
 		F490568F20B050D400CF637D /* BitsLossless2Decoder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BitsLossless2Decoder.m; sourceTree = "<group>"; };
@@ -97,6 +100,8 @@
 				F486709D20B30A3100DB9579 /* Decoder */,
 				F490569120B0512C00CF637D /* Information.h */,
 				F490569220B0512C00CF637D /* Information.m */,
+				F486709F20B43D4B00DB9579 /* ImageDataConverter.h */,
+				F48670A020B43D4B00DB9579 /* ImageDataConverter.m */,
 				F490569420B0568F00CF637D /* ImageStore.h */,
 				F490569520B0568F00CF637D /* ImageStore.m */,
 				F44C14C11D84F27500ADE497 /* SWFStructure.h */,
@@ -202,6 +207,7 @@
 				F490569020B050D400CF637D /* BitsLossless2Decoder.m in Sources */,
 				F49056A320B0789B00CF637D /* SwfContent.m in Sources */,
 				F49056B020B16A6D00CF637D /* BitsDecoder.m in Sources */,
+				F48670A120B43D4B00DB9579 /* ImageDataConverter.m in Sources */,
 				F490569A20B059B800CF637D /* BitLossless2ColorTableDecoder.m in Sources */,
 				F44C14BB1D84F07300ADE497 /* main.m in Sources */,
 				F49056A920B0794400CF637D /* SwfHeader.m in Sources */,

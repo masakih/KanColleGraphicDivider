@@ -9,7 +9,7 @@
 #import "BitsLossless2Decoder.h"
 
 #include "KanColleGraphicDivider.h"
-#import "ImageStore.h"
+#import "ImageDataConverter.h"
 
 #import "HMZlibData.h"
 
@@ -47,11 +47,6 @@
     return self.data.length;
 }
 
-- (void)decodeUsingInformationn:(Information *)information {
-    
-    saveDataWithExtension(information, self.decodedData, self.extension, self.charactorID);
-}
-
 - (UInt32) charactorID {
     
     const HMSWFBitsLossless2 *data = (HMSWFBitsLossless2 *)self.data.bytes;
@@ -86,7 +81,7 @@
                                                                         bytesPerRow:data->width * 4
                                                                        bitsPerPixel:0];
     
-    return convertImagaData(imageRef);
+    return convertToPNGImagaData(imageRef);
 }
 
 - (NSString *)extension {

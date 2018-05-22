@@ -11,4 +11,3 @@
 
 void saveDataWithExtension(Information *info, id data, NSString *extention, UInt16 charactorID);
 
-NSData *convertImagaData(id data);
