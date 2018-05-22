@@ -124,11 +124,7 @@ int main(int argc, char * const *argv) {
         if(charactorid) {
             
             NSString *charactoridsString = [[NSString alloc] initWithUTF8String:charactorid];
-            NSArray *ids = [charactoridsString componentsSeparatedByString:@","];
-            if(ids.count != 0) {
-                
-                charactorIds = ids;
-            }
+            charactorIds = [charactoridsString componentsSeparatedByString:@","];
         }
                 
         dispatch_group_t group = dispatch_group_create();
