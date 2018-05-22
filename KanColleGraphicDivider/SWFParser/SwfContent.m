@@ -28,7 +28,7 @@ typedef enum : NSUInteger {
 
 @property (nonnull) NSData *data;
 
-//@property NSRange nextRange;
+@property NSRange nextRange;
 
 @property TagType tagType;
 @property (nullable) NSData *contentData;
@@ -85,21 +85,6 @@ typedef enum : NSUInteger {
     }
     
     return [SwfContent contentWithData:[self.data subdataWithRange:self.nextRange]];
-}
-
-- (UInt32)charactorID {
-    
-    return self.decoder.charactorID;
-}
-
-- (NSData *)content {
-    
-    return self.decoder.decodedData;
-}
-
-- (NSString *)extension {
-    
-    return self.decoder.extension;
 }
 
 - (BOOL)parse {

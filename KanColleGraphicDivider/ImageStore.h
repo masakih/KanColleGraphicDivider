@@ -8,6 +8,12 @@
 
 #import <Cocoa/Cocoa.h>
 #import "Information.h"
+#import "ImageDecoder.h"
 
-void saveDataWithExtension(Information *info, id data, NSString *extention, UInt16 charactorID);
+@interface ImageStore: NSObject
 
++ (instancetype)imageStoreWithInformation:(Information *)information;
+
+- (void)store:(id<ImageDecoder>)decoder;
+
+@end

@@ -8,16 +8,14 @@
 
 #import <Foundation/Foundation.h>
 
+#import "ImageDecoder.h"
+
 @interface SwfContent : NSObject
 
 + (nullable instancetype)contentWithData:(NSData *)data;
 
-@property NSRange nextRange;
-
 @property (nullable, readonly) SwfContent *next;
 
-@property (readonly) UInt32 charactorID;
-@property (nullable, readonly) NSData *content;
-@property (readonly) NSString *extension;
+@property (nullable, readonly) id<ImageDecoder> decoder;
 
 @end

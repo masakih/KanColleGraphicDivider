@@ -84,23 +84,14 @@ void extractImagesFromSWFFile(Information *info) {
     SwfData *swf = [SwfData dataWithData:data];
     SwfContent *content = swf.firstContent;
     
+    ImageStore *store = [ImageStore imageStoreWithInformation:info];
+    
     while( content ) {
         
         SwfContent *aContent = content;
         content = aContent.next;
         
-        NSData *data = aContent.content;
-        if( !data ) {
-            
-            continue;
-        }
-        
-        if( [info skipCharactorID:aContent.charactorID] ) {
-            
-            continue;
-        }
-        
-        saveDataWithExtension(info, data, aContent.extension, aContent.charactorID);
+        [store store:content.decoder];
     }
 }
 

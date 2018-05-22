@@ -95,6 +95,7 @@
 			children = (
 				F486709E20B30A3D00DB9579 /* mics */,
 				F490569720B0584600CF637D /* KanColleGraphicDivider.h */,
+				F44C14C11D84F27500ADE497 /* SWFStructure.h */,
 				F44C14BA1D84F07300ADE497 /* main.m */,
 				F486709C20B30A2300DB9579 /* SWFParser */,
 				F486709D20B30A3100DB9579 /* Decoder */,
@@ -104,7 +105,6 @@
 				F48670A020B43D4B00DB9579 /* ImageDataConverter.m */,
 				F490569420B0568F00CF637D /* ImageStore.h */,
 				F490569520B0568F00CF637D /* ImageStore.m */,
-				F44C14C11D84F27500ADE497 /* SWFStructure.h */,
 			);
 			path = KanColleGraphicDivider;
 			sourceTree = "<group>";

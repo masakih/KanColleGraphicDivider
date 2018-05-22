@@ -9,10 +9,38 @@
 #include "KanColleGraphicDivider.h"
 #import "ImageStore.h"
 
-void saveDataWithExtension(Information *info, NSData *data, NSString *extention, UInt16 charactorID) {
+@interface ImageStore()
+
+@property Information *information;
+
+@end
+
+@implementation ImageStore
+
++ (instancetype)imageStoreWithInformation:(Information *)information {
     
-    NSString *path = [NSString stringWithFormat:@"%@-%d.%@", info.originalName, charactorID, extention];
-    path = [info.outputDir stringByAppendingPathComponent:path];
-    NSURL *url = [NSURL fileURLWithPath:path];
-    [data writeToURL:url atomically:YES];
+    return [[self alloc] initWithInformation:information];
 }
+
+- (instancetype)initWithInformation:(Information *)information {
+    
+    self = [super init];
+    if( self ) {
+        
+        self.information = information;
+    }
+    
+    return self;
+}
+
+- (void)store:(id<ImageDecoder>)decoder {
+    
+    NSString *path = [NSString stringWithFormat:@"%@-%d.%@",
+                      self.information.originalName, decoder.charactorID, decoder.extension];
+    path = [self.information.outputDir stringByAppendingPathComponent:path];
+    NSURL *url = [NSURL fileURLWithPath:path];
+    
+    [decoder.decodedData writeToURL:url atomically:YES];
+}
+
+@end
