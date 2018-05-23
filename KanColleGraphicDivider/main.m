@@ -26,17 +26,25 @@ static void usage(int exitVal, FILE *fp) {
     fprintf(fp, "Usage: %s [OPTIONS] input-swf-file\n", toolName);
     
     fprintf(fp, "\n");
+    
     fprintf(fp, "  -c charactorIDs, --charactorid=charactorIDs\n");
-    fprintf(fp, "\tcomma separated target image charactor ids. ex) 17,19 \n");
+    fprintf(fp, "\tComma separated target image charactor ids. ex) 17,19 \n");
     fprintf(fp, "\textract all images if not set.\n");
+    
     fprintf(fp, "  -o output-directory, --output=output-directory\n");
-    fprintf(fp, "\textracted images output to output-directory.\n");
+    fprintf(fp, "\tExtracted images output to output-directory.\n");
+    
     fprintf(fp, "  -v, --version\n");
-    fprintf(fp, "\toutput version information and exit.\n");
+    fprintf(fp, "\tOutput version information and exit.\n");
+    
     fprintf(fp, "  -f, --force\n");
-    fprintf(fp, "\tif set, force orver write outputfile.\n");
+    fprintf(fp, "\tIf set, force orver write outputfile.\n");
+    
+    fprintf(fp, "  -s, --silent\n");
+    fprintf(fp, "\tSilent mode.\n");
+    
     fprintf(fp, "  -h, --help\n");
-    fprintf(fp, "\tdisplay this help and text.\n");
+    fprintf(fp, "\tDisplay this help and text.\n");
     
     exit(exitVal);
 }
@@ -60,11 +68,12 @@ int main(int argc, char * const *argv) {
         
         toolName = toolNameStr(argv[0]);
         
-#define SHORTOPTS "fho:vc:"
+#define SHORTOPTS "fsho:vc:"
         static struct option longopts[] = {
             {"output",      required_argument,  NULL,   'o'},
             {"charactorid", required_argument,  NULL,   'c'},
             {"force",       no_argument,        NULL,   'f'},
+            {"silent",      no_argument,        NULL,   's'},
             {"version",     no_argument,        NULL,   'v'},
             {"help",        no_argument,        NULL,   'h'},
             {NULL,          0,                  NULL,   0}
@@ -81,6 +90,10 @@ int main(int argc, char * const *argv) {
                     break;
                 case 'f':
                     forceOverwrite = YES;
+                    break;
+                case 's':
+                    fclose(stdout);
+                    fclose(stderr);
                     break;
                 case 'h':
                     usage(EXIT_SUCCESS, stdout);
