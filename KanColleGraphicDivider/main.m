@@ -16,8 +16,8 @@
 const char *toolName;
 const char *versionString = "1.0";
 
-const char *toolNameStr(const char *argv0)
-{
+const char *toolNameStr(const char *argv0) {
+    
     return [[[NSString stringWithFormat:@"%s", argv0] lastPathComponent] fileSystemRepresentation];
 }
 
