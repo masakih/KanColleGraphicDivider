@@ -34,6 +34,11 @@
 
 - (void)store:(id<ImageDecoder>)decoder {
     
+    if( [self.information skipCharactorID:decoder.charactorID] ) {
+        
+        return;
+    }
+    
     NSString *path = [NSString stringWithFormat:@"%@-%d.%@",
                       self.information.originalName, decoder.charactorID, decoder.extension];
     path = [self.information.outputDir stringByAppendingPathComponent:path];
